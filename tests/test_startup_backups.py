@@ -96,7 +96,12 @@ class BackupTests(unittest.TestCase):
                 stage=root/('stage-'+name);stage.mkdir();atomic_json(stage/'active.json',state);backups.publish(stage,root/name,name)
             tx=home/'transactions/one';tx.mkdir(parents=True);atomic_json(tx/'journal.json',{'state':'APPLYING'});(tx/'snapshot.json').write_text('temporary')
             backups.prune_finished_snapshots(home);self.assertTrue((tx/'snapshot.json').exists())
+            scratch=home/'checks/one/candidate-native.json';atomic_json(scratch,{'private':'temporary'})
+            preflight=home/'preflights/one';atomic_json(preflight/'shadow.json',{'private':'temporary'})
             atomic_json(tx/'journal.json',{'state':'COMMITTED'});backups.prune_finished_snapshots(home)
+            self.assertFalse(scratch.exists());self.assertTrue((preflight/'shadow.json').exists())
+            atomic_json(preflight/'child-exited.json',{'exit':0});backups.prune_finished_snapshots(home)
+            self.assertFalse((preflight/'shadow.json').exists())
             self.assertFalse((tx/'snapshot.json').exists());self.assertTrue((tx/'journal.json').exists())
 
 

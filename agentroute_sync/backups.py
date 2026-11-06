@@ -145,6 +145,17 @@ def prune_finished_snapshots(home):
         for name in ('snapshot.json','state-before.json','source-before.js','source-candidate.js','candidate.json'):
             p=t/name
             if p.is_file() and not p.is_symlink():p.unlink();removed.append(str(p.relative_to(home)))
+    # These files are generated, credential-bearing scratch configs, not evidence.
+    # Callers hold operation.lock; a preflight additionally needs an exited child.
+    for directory in (home/'checks').glob('*'):
+        for name in ('candidate-native.json','runtime-native.json','candidate.json'):
+            p=directory/name
+            if p.is_file() and not p.is_symlink():p.unlink();removed.append(str(p.relative_to(home)))
+    for directory in (home/'preflights').glob('*'):
+        if not (directory/'child-exited.json').is_file():continue
+        for name in ('request.json','shadow.json'):
+            p=directory/name
+            if p.is_file() and not p.is_symlink():p.unlink();removed.append(str(p.relative_to(home)))
     if removed:atomic_json(home/'snapshot-retention.json',{'time':time.time(),'removed':removed,'permanent_sets':2})
     for cache_root in (home/'cache',Path(settings['core_home'])/'rules/agent-route/generations') if settings.get('core_home') else (home/'cache',):
         for p in cache_root.glob('*'):
