@@ -10,6 +10,7 @@ A public mirror of the upstream AgentRoute Mihomo rules, with a separate local m
 - Local exact-host policy, exit credentials, expected IP, node definitions, and recovery material stay in a private directory outside this repository.
 - Rule application and exit rotation share a lock. Downloaded data is not applied state. Failed generations are held instead of immediately retried.
 - Downloaded documentation, templates, and updated programs never replace installed code automatically. The installed program is a snapshot of an explicitly installed Git commit.
+- Review and failure events leave durable private notices and attempt a deduplicated macOS notification. A successful notification command does not prove the desktop displayed it; the local status launcher remains available.
 
 This is initially adapted to Clash Verge Rev 2.5.10 / Mihomo 1.19.33 on macOS. Changed client/core versions require review. It does not claim every DNS, IPv6, browser, or account-level behavior is verified by a successful rule update.
 

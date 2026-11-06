@@ -20,6 +20,7 @@ from .data import UPSTREAM, IDS, resolve, download, verify, native_validate, fet
 from .adapter import render, extract_exit, egress_revision, strip_markers, validate_exit
 from .backend import Backend, rule_invariants
 from .transaction import new_transaction, launch_guard, unload_guard, pending, update, commit, recover, watchdog, FINAL
+from .notices import notify
 
 DEFAULT_HOME=Path.home()/'AgentRoute/automation'
 PROGRAM=Path(__file__).resolve().parent.parent
@@ -44,6 +45,9 @@ def freeze_program(home):
 def status(home, name, **details):
     result={'status':name,'time':time.time(),**details}
     atomic_json(Path(home)/'status.json',result)
+    if name=='REVIEW_REQUIRED':notify(home,'review',{'status':name,**details})
+    elif name in ('ROLLED_BACK','RECOVERY_UNCONFIRMED','HELD'):
+        notify(home,'failure',{'status':name,**details})
     return result
 
 def bootstrap(home, repository, policy=None):
@@ -92,6 +96,7 @@ def check_docs(home, settings):
         own_main=resolve(settings['repository'],'main')
         if own_main!=settings.get('code_commit'):
             atomic_json(Path(home)/'program-review-needed.json',{'remote_commit':own_main,'installed_commit':settings.get('code_commit'),'time':time.time(),'automatically_installed':False})
+            notify(home,'review',{'program_commit':own_main,'installed_commit':settings.get('code_commit')})
         sha=resolve(settings['repository'],'upstream-docs')
         data=json.loads(fetch('https://raw.githubusercontent.com/'+settings['repository']+'/'+sha+'/provenance.json'))
         master=data['upstream_master']
@@ -99,6 +104,7 @@ def check_docs(home, settings):
             notice={'status':'REVIEW_REQUIRED','upstream_master':master,'reviewed_master':settings['reviewed_upstream_master'],'time':time.time()}
             atomic_json(Path(home)/'review-needed.json',notice)
             atomic_bytes(Path(home)/'review-needed.md',('AgentRoute 文档/程序有变化，请复查。\n\nhttps://github.com/'+UPSTREAM+'/compare/'+settings['reviewed_upstream_master']+'...'+master+'\n\n未自动替换本机 DNS、WebRTC、模板或同步程序。\n').encode())
+            notify(home,'review',{'upstream_master':master,'reviewed_master':settings['reviewed_upstream_master']})
         return master
     except Exception:
         atomic_json(Path(home)/'docs-check.json',{'status':'UNVERIFIED','time':time.time()})
@@ -280,7 +286,9 @@ def main():
     except Exception as error:
         # Never echo client payloads, proxy addresses or credentials in scheduler output.
         result={'status':'FAILED','error':type(error).__name__+':'+str(error)}
-        if args.command not in ('watchdog','preflight-worker') and args.home.exists():atomic_json(args.home/'status.json',dict(result,time=time.time()))
+        if args.command not in ('watchdog','preflight-worker') and args.home.exists():
+            atomic_json(args.home/'status.json',dict(result,time=time.time()))
+            notify(args.home,'failure',result)
         print(json.dumps(result,ensure_ascii=False));return 1
 
 def adopt_exit(home,expected):

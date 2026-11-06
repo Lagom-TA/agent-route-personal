@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 from agentroute_sync.common import atomic_json, digest, yaml_load
 from agentroute_sync import adapter, data, transaction
+from agentroute_sync.backend import Backend
+from agentroute_sync.notices import notify
 
 LEGACY = r'''
 const routingData={group:'中转节点',defaultTransit:'airport',domains:['+.cn'],cncidrs:['1.0.1.0/24'],lanRules:['DOMAIN-SUFFIX,lan,DIRECT','IP-CIDR,198.18.0.0/16,DIRECT,no-resolve']};
@@ -151,5 +153,25 @@ class YAMLCompatibility(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/'input.yaml';p.write_text('x: !ruby/object:Gem::Installer {}\n')
             with self.assertRaises(ValueError):yaml_load(p)
+
+class ProbeCoverage(unittest.TestCase):
+    def test_preview_tests_protected_hosts_through_the_preview_proxy(self):
+        backend=Backend({'core_home':'/unused','extension':'/unused','core_binary':'/unused','node_binary':'/unused',
+                         'protected_hosts':['api.example.org']})
+        runtime={'mode':'rule','tun':{'enable':True}}
+        with patch.object(backend,'api',return_value=runtime),patch.object(backend,'curl',return_value={'passed':True}) as curl:
+            result=backend.health('192.0.2.1',rounds=1,proxy='http://127.0.0.1:12345')
+        protected=[x for x in curl.call_args_list if x.args[0]=='protected:api.example.org']
+        self.assertEqual(len(protected),1)
+        self.assertEqual(protected[0].args[3],'http://127.0.0.1:12345')
+        self.assertEqual(result['path'],'isolated-preview')
+    def test_notices_are_durable_and_deduplicated_even_without_desktop_permission(self):
+        with tempfile.TemporaryDirectory() as d,patch('agentroute_sync.notices.subprocess.run',side_effect=OSError) as send:
+            notify(d,'review',{'upstream_master':'a'*40})
+            notify(d,'review',{'upstream_master':'a'*40})
+            self.assertEqual(send.call_count,1)
+            records=json.loads((Path(d)/'notices.json').read_text())
+            self.assertEqual(len(records),1)
+            self.assertFalse(next(iter(records.values()))['desktop_display_verified'])
 
 if __name__=='__main__':unittest.main()

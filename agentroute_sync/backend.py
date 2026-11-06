@@ -151,8 +151,8 @@ class Backend:
                   ('media','https://media.w3.org/2010/05/sintel/trailer.mp4',None,proxy,(200,206),True)]
             if proxy is None:
                 jobs.append(('system-proxy-exit','https://www.cloudflare.com/cdn-cgi/trace',expected_ip,'http://127.0.0.1:'+str(self.settings['mixed_port']),(200,),False))
-                for host in self.settings.get('protected_hosts',[]):
-                    jobs.append(('protected:'+host,'https://'+host+'/',None,None,tuple(range(200,500)),False))
+            for host in self.settings.get('protected_hosts',[]):
+                jobs.append(('protected:'+host,'https://'+host+'/',None,proxy,tuple(range(200,500)),False))
             with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
                 futures=[pool.submit(self.curl,*args) for args in jobs]
                 while not all(f.done() for f in futures):
@@ -171,7 +171,9 @@ class Backend:
                 return {'passed':False,'probes':records,'routes':routes}
             if iteration+1<rounds:time.sleep(2)
         violation=any(r['host'] in self.settings.get('protected_hosts',[]) and self.group not in r['chains'] for r in routes)
-        return {'passed':not violation,'probes':records,'routes':routes,'protected_route_violation':violation}
+        return {'passed':not violation,'probes':records,'routes':routes,'protected_route_violation':violation,
+                'protected_route_hosts_observed':sorted({r['host'] for r in routes if r['host'] in self.settings.get('protected_hosts',[])}) if proxy is None else [],
+                'path':'main' if proxy is None else 'isolated-preview'}
 
     def current_exit_ip(self):
         with tempfile.TemporaryDirectory(prefix='agentroute-exit-') as work:
