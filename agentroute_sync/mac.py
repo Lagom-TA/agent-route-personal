@@ -15,7 +15,7 @@ import uuid
 from contextlib import nullcontext
 
 from . import VERSION
-from .common import atomic_bytes, atomic_json, digest, identity, lock, read_json, yaml_load
+from .common import atomic_bytes, atomic_json, digest, identity, lock, read_json, yaml_load, boot_session_id
 from .data import UPSTREAM, IDS, resolve, download, verify, native_validate, fetch
 from .adapter import render, extract_exit, egress_revision, strip_markers, validate_exit
 from .backend import Backend, rule_invariants
@@ -96,7 +96,8 @@ def recover_pending(home):
         except (ValueError,OSError):record=read_json(tx/'recovery-plan.json',{})
         if record.get('state') in ('ARMED','APPLYING','RECOVERING'):
             if record.get('selftest'):continue
-            if time.time()>=record.get('deadline_wall',0):
+            boot=boot_session_id()
+            if (record.get('boot_session') and boot and record['boot_session']!=boot) or time.time()>=record.get('deadline_wall',0):
                 recover(tx);unload_guard(tx)
             else:raise ValueError('transaction_still_pending')
 
@@ -204,6 +205,10 @@ def apply_generation(home, settings, generation, cache, info, new_exit=None, exp
                             exit_spec=next_exit,owned_aliases=final['owned_aliases'],last_healthy_at=time.time(),
                             upstream_release=read_json(cache/'provenance.json')['upstream_release'])
             commit(tx,new_active)
+            if new_exit is None and not new_active.get('pending_gui_persistence'):
+                from .backups import refresh_after_acceptance,prune_finished_snapshots
+                if not refresh_after_acceptance(home,final):return status(home,'REVIEW_REQUIRED',reason='latest_backup_refresh_failed')
+                prune_finished_snapshots(home)
             return status(home,'HEALTHY',generation=generation,transaction=tx.name,actual_http_validation=True)
         except Exception as error:
             atomic_json(tx/'application-error.json',{'error_type':type(error).__name__,'error':str(error),'time':time.time()})
@@ -213,9 +218,14 @@ def apply_generation(home, settings, generation, cache, info, new_exit=None, exp
             record=read_json(tx/'journal.json',{})
             if record.get('state') in FINAL:unload_guard(tx)
 
-def check(home, apply=False, retry=False):
+def check(home, apply=False, retry=False, startup=False):
     home=Path(home);recover_pending(home);settings=read_json(home/'settings.json')
     if not settings:raise ValueError('not_initialized')
+    if startup:
+        from .startup import verify_startup
+        result=verify_startup(home,force=False)
+        if result['status'] not in ('STARTUP_PASSED','STARTUP_CACHED'):
+            return status(home,'DEFERRED',reason=result.get('reason',result['status']),startup_status=result['status'])
     check_docs(home,settings)
     generation,cache,info=stage(home,settings)
     active=read_json(home/'active.json')
@@ -245,7 +255,7 @@ def install_agent(home):
     if not active.get('generation') or read_json(home/'status.json',{}).get('status') not in ('HEALTHY','UNCHANGED'):
         raise ValueError('verified_application_required_before_scheduling')
     settings['automatic_apply']=True;atomic_json(home/'settings.json',settings)
-    args=[settings['python'],'-m','agentroute_sync.mac','check','--home',str(home)]
+    args=[settings['python'],'-m','agentroute_sync.mac','check','--startup-check','--home',str(home)]
     plist={'Label':JOB,'ProgramArguments':args,'RunAtLoad':True,'ProcessType':'Background',
            'WorkingDirectory':settings['program'],'EnvironmentVariables':{'PYTHONPATH':settings['program']},
            'StartCalendarInterval':[{'Hour':h,'Minute':47} for h in [2,8,14,20]],
@@ -271,22 +281,33 @@ def selftest(home):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['bootstrap','check','status','install-agent','watchdog','recover','selftest','pause','resume','rotate','preflight','preflight-worker','adopt-exit','verify-persistence'])
+    parser.add_argument('command',choices=['bootstrap','check','status','install-agent','watchdog','recover','selftest','pause','resume','rotate','preflight','preflight-worker','adopt-exit','verify-persistence','verify-startup'])
     parser.add_argument('--home',type=Path,default=DEFAULT_HOME)
     parser.add_argument('--repository');parser.add_argument('--transaction',type=Path)
     parser.add_argument('--apply',action='store_true');parser.add_argument('--retry-held',action='store_true')
     parser.add_argument('--spec',type=Path);parser.add_argument('--expected-ip');parser.add_argument('--request',type=Path)
     parser.add_argument('--policy',type=Path)
+    parser.add_argument('--startup-check',action='store_true')
     args=parser.parse_args();os.umask(0o077)
     try:
         if args.command=='bootstrap':result=bootstrap(args.home,args.repository,args.policy)
-        elif args.command=='check':result=check(args.home,args.apply,args.retry_held)
+        elif args.command=='check':result=check(args.home,args.apply,args.retry_held,args.startup_check)
         elif args.command=='status':
             active=read_json(args.home/'active.json',{});result={'state':read_json(args.home/'status.json',{}),'generation':active.get('generation'),'egress_revision':active.get('egress_revision'),'paused':active.get('paused'),'exit_persistence_pending':bool(active.get('pending_gui_persistence')),'review_required':any(read_json(args.home/n,{}).get('status')=='REVIEW_REQUIRED' for n in ('review-needed.json','program-review-needed.json'))}
+            startup=read_json(args.home/'startup-report.json',{})
+            from .transaction import process_start
+            result['startup']={'status':startup.get('status','NOT_VERIFIED'),'passed_at':startup.get('passed_at'),
+                               'same_boot':bool(startup.get('boot_session')) and startup['boot_session']==boot_session_id(),
+                               'same_core_process':bool(startup.get('core_pid')) and startup.get('core_started_at')==process_start(startup['core_pid'])}
+            result['backups']=read_json(args.home/'backup-status.json',{})
         elif args.command=='install-agent':result=install_agent(args.home)
         elif args.command=='watchdog':result={'status':watchdog(args.transaction)}
         elif args.command=='recover':
-            path=args.transaction or Path(read_json(args.home/'latest-transaction.json')['transaction']);result={'status':recover(path,manual=True)};unload_guard(path)
+            if args.transaction is None and read_json(args.home/'settings.json',{}).get('backup_directory'):
+                from .backups import restore_current
+                result={'status':restore_current(args.home)}
+            else:
+                path=args.transaction or Path(read_json(args.home/'latest-transaction.json')['transaction']);result={'status':recover(path,manual=True)};unload_guard(path)
         elif args.command=='selftest':result=selftest(args.home)
         elif args.command in ('pause','resume'):
             with lock(args.home/'operation.lock'):
@@ -303,10 +324,14 @@ def main():
         elif args.command=='verify-persistence':
             from .persistence import verify_persistence
             result=verify_persistence(args.home)
+        elif args.command=='verify-startup':
+            recover_pending(args.home)
+            from .startup import verify_startup
+            result=verify_startup(args.home,force=True)
         else:
             result=adopt_exit(args.home,args.expected_ip)
         print(json.dumps(result,ensure_ascii=False))
-        return 0 if result.get('status') not in ('RECOVERY_UNCONFIRMED','ROLLED_BACK') else 1
+        return 0 if result.get('status') not in ('RECOVERY_UNCONFIRMED','ROLLED_BACK','STARTUP_UNVERIFIED') else 1
     except BlockingIOError:
         print(json.dumps({'status':'DEFERRED','reason':'another_rule_or_exit_operation_is_running'}));return 0
     except Exception as error:

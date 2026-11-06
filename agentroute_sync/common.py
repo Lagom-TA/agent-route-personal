@@ -11,6 +11,15 @@ import tempfile
 SHA = re.compile(r'^[a-f0-9]{40}$')
 REPO = re.compile(r'^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$')
 
+def boot_session_id():
+    linux=Path('/proc/sys/kernel/random/boot_id')
+    if linux.is_file():return linux.read_text().strip()
+    try:
+        result=subprocess.run(['/usr/sbin/sysctl','-n','kern.bootsessionuuid'],capture_output=True,text=True,timeout=3)
+        value=result.stdout.strip()
+        return value if result.returncode==0 and re.fullmatch(r'[0-9A-Fa-f-]{36}',value) else None
+    except (OSError,subprocess.TimeoutExpired):return None
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 

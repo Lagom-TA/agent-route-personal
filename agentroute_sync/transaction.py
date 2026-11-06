@@ -8,7 +8,7 @@ import subprocess
 import time
 import uuid
 
-from .common import atomic_bytes, atomic_json, digest, lock, read_json
+from .common import atomic_bytes, atomic_json, digest, lock, read_json, boot_session_id
 from .backend import Backend, evaluate_script
 
 FINAL = {'COMMITTED','ROLLED_BACK','RECOVERY_UNCONFIRMED','SELFTEST_RECOVERED'}
@@ -36,6 +36,9 @@ def update(tx, **fields):
 
 def pending(tx):
     record=read_json(Path(tx)/'journal.json')
+    boot=boot_session_id()
+    if record.get('boot_session') and boot and record['boot_session']!=boot:
+        raise RuntimeError('transaction_from_previous_boot')
     if record['state'] not in ('ARMED','APPLYING') or time.time()>=record['deadline_wall'] or time.monotonic()>=record['deadline_monotonic']:
         raise RuntimeError('transaction_not_pending')
     return record
@@ -48,6 +51,7 @@ def new_transaction(home, snapshot, state_before, script, candidate, generation,
     atomic_bytes(tx/'source-candidate.js',script.encode())
     atomic_json(tx/'candidate.json',candidate)
     record={'id':tx.name,'state':'ARMED','created_at':time.time(),'home':str(home),
+            'boot_session':boot_session_id(),
             'owner_pid':os.getpid(),'owner_started':process_start(os.getpid()),
             'deadline_wall':time.time()+seconds,'deadline_monotonic':time.monotonic()+seconds,
             'snapshot_digest':digest((tx/'snapshot.json').read_bytes()),

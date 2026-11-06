@@ -1,59 +1,77 @@
-# AgentRoute Personal
+# Usage guide
 
-A public mirror of the upstream AgentRoute Mihomo rules, with a separate local macOS updater. Public rule data and source notices are mirrored without local nodes, subscriptions, exit addresses, or credentials.
+## Run commands
 
-## What runs where
-
-- GitHub Actions checks the upstream release every six hours, verifies one immutable generation, compiles it using the pinned official Mihomo 1.19.33 binary, and publishes an ordinary commit on `rules`. Upstream documentation and code are mirrored as inert `.txt` snapshots on `upstream-docs`; their original paths and hashes are recorded in provenance.
-- The Mac downloads from one pinned commit, checks integrity and its actual installed core, then loads all five datasets in one protected transaction. GUI persistence uses local file providers. A direct core API reload carries the same verified data as inline providers because Clash Verge's service core has a separate protected working directory. A normal GUI reload uses the app's own runtime bundle to stage the local files. Neither route needs administrator writes or restarting the core.
-- A separate launchd process starts recovery if an application remains unaccepted after 150 seconds. It restores a per-operation snapshot; it never relies on a fixed old exit or the agent remaining connected.
-- Local exact-host policy, exit credentials, expected IP, node definitions, and recovery material stay in a private directory outside this repository.
-- Rule application and exit rotation share a lock. Downloaded data is not applied state. Failed generations are held instead of immediately retried.
-- Downloaded documentation, templates, and updated programs never replace installed code automatically. The installed program is a snapshot of an explicitly installed Git commit.
-- Review and failure events leave durable private notices and attempt a deduplicated macOS notification. A successful notification command does not prove the desktop displayed it; the local status launcher remains available.
-
-This is initially adapted to Clash Verge Rev 2.5.10 / Mihomo 1.19.33 on macOS. Changed client/core versions require review. It does not claim every DNS, IPv6, browser, or account-level behavior is verified by a successful rule update.
-
-## Commands
-
-Use the installed launcher on the Mac, or run with its pinned program on `PYTHONPATH`:
+Use the installed private launcher; it selects the pinned program from local settings.
 
 ```sh
-python3 -m agentroute_sync.mac status
-python3 -m agentroute_sync.mac check
-python3 -m agentroute_sync.mac pause
-python3 -m agentroute_sync.mac resume
-python3 -m agentroute_sync.mac recover
+python3 ~/AgentRoute/automation/control.py status
+python3 ~/AgentRoute/automation/control.py verify-startup
+python3 ~/AgentRoute/automation/control.py check --startup-check
+python3 ~/AgentRoute/automation/control.py pause
+python3 ~/AgentRoute/automation/control.py resume
+python3 ~/AgentRoute/automation/control.py recover
 ```
 
-`recover` explicitly restores the latest operation and pauses automatic application. It refuses to overwrite unrelated concurrent edits. The private recovery guide describes offline file restoration if the core control socket is unavailable.
+`verify-startup` waits up to 180 seconds for the existing Clash core and TUN, checks the actual fixed-exit graph, protected rules, local rule files and DNS policy, and performs two rounds of HTTPS acceptance. It does not start, restart or reconfigure Clash. A successful check updates the latest local backup sets.
 
-Exit preparation uses a private JSON file with `proxy` (the actual entry host, port, type and credentials) and `expected_ip` (the address destinations should observe). They are different concepts. Never commit that file.
+`STARTUP_PASSED` applies to the recorded boot and core process. `STARTUP_CACHED` means that identity was accepted earlier; it does not claim new network probes. `UNCHANGED` is a rule-generation result, not fresh network acceptance. Open the local startup report to check the recorded boot, core process and time.
+
+This adapter currently requires Clash Verge Rev 2.5.10 / Mihomo 1.19.33, the existing Python 3.11+ and Node runtimes, and system Ruby. A changed client/core/source requires review. Startup acceptance does not imply complete browser, DNS, IPv6 or account-level acceptance.
+
+## Scheduled checks
+
+The installed Mac launchd job runs at login and at local 02:47, 08:47, 14:47 and 20:47. It waits for readiness before the initial acceptance and remote rule check. StartCalendarInterval coalesces missed events after wake; do not describe this as a tested sleep/wake cycle unless it was actually observed.
+
+GitHub Actions checks upstream every six hours, verifies one immutable generation with the pinned official core, and publishes ordinary commits on `rules`. Documentation and code are kept as inert text snapshots on `upstream-docs`. On the Mac, only validated rules are applied automatically; documentation, templates and code updates leave review notices.
+
+The Mac verifies the five GUI file providers and carries equivalent verified inline data during direct API reloads. GUI reactivation uses Clash's existing owner session to stage file providers into the service runtime. Do not write the protected service directory or broaden its permissions.
+
+## Keep two latest backups
+
+Configure a private `backup_directory` and the original subscription filename. Keep one latest set of each kind:
+
+- `provider-original`: the unmodified provider subscription.
+- `agentroute-current`: the last accepted local configuration, exit, required rules, settings and recovery code.
+
+A successor is written and verified before replacing the previous set. Unfinished transactions keep their temporary snapshots. After acceptance, keep compact transaction/health evidence and remove completed config snapshots and obsolete managed generation caches. Do not call cache files or historical logs independent recovery points.
+
+Default `recover` validates and restores `agentroute-current`, then pauses automatic application. The backup directory also contains a standalone recovery launcher using its own validated code. Importing `provider-original` is a separate explicit operation and changes the current routing/exit policy.
+
+## Change an exit
+
+Keep the new entry host, protocol, port and authentication in a private JSON `proxy` object, with `expected_ip` for the final public exit. Never commit that file.
 
 ```sh
-python3 -m agentroute_sync.mac preflight --spec /private/path/new-exit.json
-python3 -m agentroute_sync.mac rotate --spec /private/path/new-exit.json
-python3 -m agentroute_sync.mac verify-persistence
+python3 ~/AgentRoute/automation/control.py preflight --spec /private/path/new-exit.json
+python3 ~/AgentRoute/automation/control.py rotate --spec /private/path/new-exit.json
+python3 ~/AgentRoute/automation/control.py verify-persistence
 ```
 
-Preflight runs a time-limited child core bound to loopback and the physical interface, with no TUN or system-proxy changes. It builds the proposed exit using the currently selected original transit, not another chain through the old exit. Normal traffic is left on the main core. Rotation requires successful preflight and then verifies the main core after applying.
+Rotation includes a bounded loopback-only, no-TUN preflight using the currently selected original transit. The main application has an independent 150-second recovery deadline. `EXIT_HEALTHY_PERSISTENCE_PENDING` keeps rule application paused: open the current subscription page, run `verify-persistence`, wait for `READY_FOR_GUI_REACTIVATION`, then click Clash's “重新激活订阅”. Only unchanged-core, loaded-file and actual HTTPS acceptance completes persistence and promotes the new backup.
 
-A healthy exit rotation pauses automatic rule application until service persistence is verified. Open the current subscription page first, run `verify-persistence`, and click the app's “重新激活订阅” only after the command prints `READY_FOR_GUI_REACTIVATION`. This uses the app's existing owner session to stage the new exit and rule files into its protected runtime directory. The independent recovery guard is armed first. The command checks file-provider counts, unchanged core process, the exact host rules, expected exit and two rounds of actual HTTPS before resuming automation. No owner session is taken over and no administrator permissions are added.
-
-The Mac uses its existing Python 3.11+ runtime, Node runtime and system Ruby's YAML syntax tree parser. No Python packages are installed. The YAML parser preserves IPv6 literals and rejects custom object tags.
-
-## Validation
+## Test and install code
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
 
-Tests cover generation integrity, failed/empty/stale bundles, exact policy persistence, idempotent exit-chain rendering, changed server/port/protocol, cycle/direct escape rejection, independent timeout recovery, invalid success records, concurrent selection/subscription changes and stale exit revisions. Network deployment evidence belongs in the private local report, not this public repository.
+Use fixtures for corrupt/stale data, changed chains, direct escapes, boot transitions and retention failures. Native checks validate syntax/dependencies only. Shadow cores must be time-limited, have no TUN/system-proxy changes, bind loopback and have their exit verified. Do not interrupt the main proxy for comparison.
 
-The media transport probe reads the first 1,024 bytes of a verified HTTPS MP4 stream and then closes its output. This avoids waiting for a complete video when a server ignores HTTP Range. Curl's resulting intentional write-stop (23) is accepted only with valid TLS, a video content type and an MP4 signature. If the W3C sample fails, a Google Chrome sample is tried over the same proxy path; every failed primary attempt is retained. This probe does not replace real browser playback acceptance.
+Commit tested code, freeze a new local snapshot, then update the installed settings and launchd job explicitly. Never edit the running snapshot in place or automatically execute upstream documents/scripts. Keep recovery available before installation.
 
-## Source and retention
+The media probe reads 1,024 bytes with verified TLS, video type and MP4 signature. Curl's intentional write-stop 23 is accepted only when those conditions hold. Failed W3C attempts remain recorded if a Google sample is used. This does not replace real browser playback testing.
 
-Rule data originates from [ryuu-restart/agent-route](https://github.com/ryuu-restart/agent-route). Each published snapshot preserves the upstream manifest, index, source metadata and license notices. See the `rules` branch for those notices. This repository does not reclassify the upstream datasets; user policy is applied separately on the device.
+## Read local records
 
-Published history is not force-rewritten. Local successful generations and transaction records are retained; the updater does not prune user backups. Rules are continuously maintained upstream: keep following documentation and compatibility changes as well as the data feed.
+| Record | Use |
+| --- | --- |
+| `startup-report.json` | Boot/core-specific acceptance |
+| `backup-status.json` | Latest backup verification |
+| `status.json`, `active.json` | Rule operation and accepted revision |
+| `transactions/` | Pending recovery material and completed evidence |
+| `review-needed.md`, `notices.json` | Review/failure notices; desktop display is not guaranteed |
+
+Local records can contain sensitive network data. Keep them out of GitHub and Issues. Follow the user's explicit publication choice.
+
+Rule data and license/source notices remain attributed to [ryuu-restart/agent-route](https://github.com/ryuu-restart/agent-route); consult the published `rules` branch for their manifests and notices.

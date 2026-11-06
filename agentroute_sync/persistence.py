@@ -64,6 +64,9 @@ def verify_persistence(home):
             new_active=dict(active,pending_gui_persistence=None,gui_persistence_verified_at=time.time())
             commit(tx,new_active)
             atomic_json(tx/'persistence-verification.json',{'core_pid_unchanged':True,'providers':'File','counts':info['counts'],'actual_http_validation':True})
+            from .backups import refresh_after_acceptance,prune_finished_snapshots
+            if not refresh_after_acceptance(home,final):return status(home,'REVIEW_REQUIRED',reason='latest_backup_refresh_failed')
+            prune_finished_snapshots(home)
             return status(home,'HEALTHY',generation=active['generation'],transaction=tx.name,gui_persistence_verified=True)
         except Exception as error:
             atomic_json(tx/'application-error.json',{'error_type':type(error).__name__,'error':str(error),'time':time.time()})
