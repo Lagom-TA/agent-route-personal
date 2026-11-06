@@ -35,6 +35,16 @@ class StartupTests(unittest.TestCase):
             with patch('agentroute_sync.transaction.boot_session_id',return_value='new'),self.assertRaisesRegex(RuntimeError,'previous_boot'):
                 transaction.pending(p)
 
+    def test_protected_udp_rule_must_be_first_enabled_and_exact(self):
+        host='claude.example.invalid';rules=[{'type':'AND','proxy':'REJECT','payload':'((Network,udp) && (Domain,'+host+'))'},
+                                            {'type':'Domain','payload':host,'proxy':'fixed'}]
+        startup.protected_prefix_check(rules,[host],'fixed')
+        for changed in ([{'type':'Match','proxy':'DIRECT'}]+rules,
+                        [dict(rules[0],extra={'disabled':True}),rules[1]],
+                        [dict(rules[0],payload='((Network,tcp) && (Domain,'+host+'))'),rules[1]]):
+            with self.assertRaisesRegex(ValueError,'protected_prefix_changed'):
+                startup.protected_prefix_check(changed,[host],'fixed')
+
     def test_startup_rejects_direct_fallback_even_with_valid_member_names(self):
         generation='a'*40;spec={'type':'socks5','server':'exit.example.invalid','port':1080,'udp':False}
         node=dict(spec,name='🌐固定出口 · airport',**{'dialer-proxy':'airport','agentroute-generated':True})

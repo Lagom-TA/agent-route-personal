@@ -25,6 +25,20 @@ def wait_ready(backend,seconds=180):
             time.sleep(2)
 
 
+
+def protected_prefix_check(rules,hosts,group):
+    for i,host in enumerate(hosts):
+        if len(rules)<2*i+2:raise ValueError('startup_protected_prefix_missing')
+        udp,tcp=rules[2*i:2*i+2]
+        expected='((network,udp)&&(domain,'+host.lower()+'))'
+        if (udp.get('type')!='AND' or udp.get('proxy')!='REJECT'
+                or ''.join(udp.get('payload','').lower().split())!=expected
+                or udp.get('extra',{}).get('disabled',False)
+                or tcp.get('type')!='Domain' or tcp.get('payload')!=host or tcp.get('proxy')!=group
+                or tcp.get('extra',{}).get('disabled',False)):
+            raise ValueError('startup_protected_prefix_changed')
+
+
 def structural_check(backend,snapshot,active,counts):
     config=snapshot['config'];group=backend.group;graph_check(config)
     for name in IDS:
@@ -45,9 +59,7 @@ def structural_check(backend,snapshot,active,counts):
     rules=backend.api('GET','/rules')['rules']
     if not rules or rules[-1].get('type')!='Match' or rules[-1].get('proxy')!=group:
         raise ValueError('startup_default_route_changed')
-    for host in backend.settings.get('protected_hosts',[]):
-        first=next((r for r in rules if r.get('type')=='Domain' and r.get('payload')==host),None)
-        if not first or first.get('proxy')!=group:raise ValueError('startup_protected_host_changed')
+    protected_prefix_check(rules,backend.settings.get('protected_hosts',[]),group)
     dns=config.get('dns',{});policy=dns.get('nameserver-policy',{})
     if dns.get('fallback'):raise ValueError('startup_dns_fallback_changed')
     for host in backend.settings.get('protected_hosts',[]):
