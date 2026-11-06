@@ -53,16 +53,15 @@ dns:
   proxy-server-nameserver:
     - https://223.5.5.5/dns-query#DIRECT
     - https://223.6.6.6/dns-query#DIRECT
-  # Keeps the per-domain resolver on the second lookup made by a DIRECT connection.
-  direct-nameserver:
-    - https://223.5.5.5/dns-query#DIRECT
-    - https://223.6.6.6/dns-query#DIRECT
-  direct-nameserver-follow-policy: true
+  # Keep domain-based DNS policy even when China-IP fallback routes the connection DIRECT.
+  # Explicitly clear a separately configured direct resolver when merging this example.
+  direct-nameserver: []
   nameserver:
     - https://1.1.1.1/dns-query#PROXY
     - https://1.0.0.1/dns-query#PROXY
   nameserver-policy:
-    # "system" follows the OS resolver, which a client may rewrite to a public address.
+    # "system" is a reference, not proof of a local path: verify this core's actual
+    # upstream separately from the application-side OS resolver. Replace if needed.
     rule-set:sr-private: [system]
     rule-set:sr-proxy:
       - https://1.1.1.1/dns-query#PROXY
@@ -123,10 +122,13 @@ rules:
   - DOMAIN-SUFFIX,lan,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
   - DOMAIN-SUFFIX,home.arpa,DIRECT
-  # A FakeIP address must never reach the ULA rule below and be treated as LAN.
+  # Addresses the core owns (FakeIP pools, TUN interface) must never reach the LAN rules below.
   - IP-CIDR,198.18.0.0/15,REJECT,no-resolve
   - IP-CIDR6,fc00::/18,REJECT,no-resolve
   - IP-CIDR6,fd00:6152::/64,REJECT,no-resolve
+  # The TUN IPv4 address comes from fake-ip-range (above); the IPv6 one does not. This is
+  # Mihomo's default tun inet6-address: use the running one instead if the profile sets it.
+  - IP-CIDR6,fdfe:dcba:9876::/126,REJECT,no-resolve
   - IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve

@@ -121,7 +121,12 @@ def selected(fmt):
     return ['index.json'] + [f'{f}/{n}{ext}' for f, ext in formats.items() for n in NAMES]
 
 
-def operate(command, root, fmt='all', fetch=get):
+def operate(command, root, fmt='all', fetch=get, release_sha=None):
+    if release_sha is not None:
+        if command != 'sync':
+            raise ValueError('release_sha_requires_sync')
+        if not isinstance(release_sha, str) or not SHA.fullmatch(release_sha):
+            raise ValueError('invalid_release_sha')
     with locked(root):
         state = pointer(root)
         for key in ('current', 'previous'):
@@ -139,7 +144,9 @@ def operate(command, root, fmt='all', fetch=get):
             return {'status': 'rolled_back', **result}
         if state['current']:
             verify(root, state['current'])
-        sha = json.loads(fetch('https://api.github.com/repos/' + REPO + '/commits/release'))['sha']
+        sha = release_sha
+        if sha is None:
+            sha = json.loads(fetch('https://api.github.com/repos/' + REPO + '/commits/release'))['sha']
         if not isinstance(sha, str) or not SHA.fullmatch(sha): raise ValueError('invalid_release_sha')
         raw = fetch(BASE + sha + '/manifest.json'); m = json.loads(raw)
         age = validate_manifest(m)
@@ -187,9 +194,11 @@ def main():
     p.add_argument('command', choices=('sync', 'verify', 'status', 'rollback'))
     p.add_argument('--output', required=True, type=Path)
     p.add_argument('--format', choices=(*FORMATS, 'all'), default='all')
+    p.add_argument('--release-sha', help='sync only: verified full release SHA; all data checks still apply')
     a = p.parse_args()
     try:
-        result = operate(a.command, a.output.absolute(), a.format)
+        options = {'release_sha': a.release_sha} if a.release_sha is not None else {}
+        result = operate(a.command, a.output.absolute(), a.format, **options)
         print(json.dumps(result)); return 0
     except (ValueError, OSError, KeyError, TypeError, http.client.HTTPException) as e:
         print(json.dumps({'status': 'failed', 'error': str(e), 'current_preserved': True})); return 1

@@ -13,6 +13,14 @@ Windows 使用自己的目录路径。format 可选 mihomo、surge、sing-box、
 
 sync 解析 release 完整 SHA 后，按该提交下载 manifest、index 和选定格式的五类规则（sing-box 另含 DNS 判断用的 non-cn-ip.json），验证相对路径、每文件 16 MiB 上限、SHA-256 和同代时间。失败保留当前指针。48 小时只约束本项目发布时间，不约束上游提交年龄。首次同步无可用缓存时明确失败，不生成假成功结果。
 
+默认通过 GitHub 匿名 REST API 查询 release SHA，共享出口耗尽额度时会失败。有缓存则保留，首次同步则停止。执行 Agent 可通过公开 Git 引用或其他可靠方式核实本仓库的完整 release SHA，再显式传入；工具无需 Git 或访问令牌：
+
+```sh
+python scripts/sync_rules.py sync --output /your/rules-cache --format mihomo --release-sha <完整40位小写十六进制SHA>
+```
+
+`--release-sha` 仅用于 sync，跳过的是 API 查版本这一步，同代时间、时效、路径、大小、哈希和回退 held 保护仍照常校验。它不证明该 SHA 仍是当前 release 分支头；调用方应记录选择依据。该参数不能用于强制接收过期发布或覆盖用户回退决定。
+
 成功后 current.json 指向 generations 内独立版本目录，返回值包含 generation、directory、files、age_seconds、stale。current.json 不是任何客户端的配置格式。要把规则发给其他设备时，从它找到当前版本目录，复制到你自己的发布路径；版本目录名每代都会变。Agent 必须把实际验证、客户端加载和更新动作分别报告；本工具下载成功不表示客户端已更新。
 
 同一缓存使用系统级排它文件锁，进程结束自动释放。提交使用暂存目录与原子指针。仅保留当前及上一份有效版本；rollback 校验上一份后交换指针，允许明确回退到过期缓存并返回 stale 状态。回退后，sync 不会再切回刚离开的那份发布：它返回 status 为 held 的结果和 held_generation，退出码 0，继续使用当前版本，直到出现更新的发布；再执行一次 rollback 可撤销回退。缓存文件和目录按当前 umask 创建，客户端以其他用户运行时，用 umask 或目录权限保证它能读取。verify/status 不联网，检查当前文件完整性。两者可能创建缓存锁文件，但不切换版本。缓存损坏会拒绝使用，需由使用者保留问题副本后选择新的输出目录重新同步。
