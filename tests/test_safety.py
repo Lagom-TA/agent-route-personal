@@ -2,18 +2,20 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 import copy
 import json
+import io
 import shutil
 import tempfile
 import time
 import unittest
 import urllib.error
-from unittest.mock import patch
+from unittest.mock import patch,Mock
 
 from agentroute_sync.common import atomic_json, digest, yaml_load
 from agentroute_sync import adapter, data, transaction
 from agentroute_sync.backend import Backend
 from agentroute_sync.notices import notify
 from agentroute_sync.mirror import doc_snapshot_path
+from agentroute_sync.mac import require_exit_persistence,check_docs
 
 LEGACY = r'''
 const routingData={group:'中转节点',defaultTransit:'airport',domains:['+.cn'],cncidrs:['1.0.1.0/24'],lanRules:['DOMAIN-SUFFIX,lan,DIRECT','IP-CIDR,198.18.0.0/16,DIRECT,no-resolve']};
@@ -164,6 +166,48 @@ class YAMLCompatibility(unittest.TestCase):
             with self.assertRaises(ValueError):yaml_load(p)
 
 class ProbeCoverage(unittest.TestCase):
+    def test_review_notices_resolve_after_an_explicitly_installed_revision_matches(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);atomic_json(root/'program-review-needed.json',{'status':'REVIEW_REQUIRED'});atomic_json(root/'review-needed.json',{'status':'REVIEW_REQUIRED'})
+            settings={'repository':'owner/repo','code_commit':'a'*40,'reviewed_upstream_master':'c'*40}
+            with patch('agentroute_sync.mac.resolve',side_effect=['a'*40,'b'*40]),patch('agentroute_sync.mac.fetch',return_value=json.dumps({'upstream_master':'c'*40}).encode()):
+                self.assertEqual(check_docs(root,settings),'c'*40)
+            self.assertEqual(json.loads((root/'program-review-needed.json').read_text())['status'],'CURRENT')
+            self.assertEqual(json.loads((root/'review-needed.json').read_text())['status'],'CURRENT')
+            self.assertEqual(json.loads((root/'docs-check.json').read_text())['status'],'VERIFIED')
+    def test_exit_success_remains_paused_until_gui_persistence_is_verified(self):
+        with tempfile.TemporaryDirectory() as d,patch('agentroute_sync.mac.notify'):
+            root=Path(d);atomic_json(root/'active.json',{'revision':4,'paused':False,'generation':'a'*40,'egress_revision':'exit-new'})
+            result=require_exit_persistence(root,{'transaction':'rotation-1'})
+            active=json.loads((root/'active.json').read_text())
+            self.assertEqual(result['status'],'EXIT_HEALTHY_PERSISTENCE_PENDING')
+            self.assertTrue(active['paused']);self.assertEqual(active['egress_revision'],'exit-new')
+            self.assertEqual(active['pending_gui_persistence']['operation'],'rotation-1')
+    def test_bounded_media_requires_verified_tls_video_bytes_and_expected_stop(self):
+        backend=Backend({'core_home':'unused','extension':'unused','core_binary':'unused','node_binary':'unused'})
+        chunk=(b'\x00\x00\x00\x18ftypisom'+b'x'*1024)[:1024]
+        for code,tls,mime,body,passed in [(23,0,'video/mp4',chunk,True),(0,0,'video/mp4',chunk,True),
+                (23,1,'video/mp4',chunk,False),(23,0,'text/html',chunk,False),
+                (23,0,'video/mp4',chunk[:10],False),(28,0,'video/mp4',chunk,False)]:
+            with self.subTest(code=code,tls=tls,mime=mime,size=len(body)):
+                proc=Mock();proc.stdout=io.BytesIO(body);proc.returncode=code
+                proc.communicate.return_value=(None,('\nAGENTROUTE_META:200 '+str(tls)+' '+mime+'\n').encode())
+                with patch('agentroute_sync.backend.subprocess.Popen',return_value=proc):
+                    result=backend._curl_once('media','https://media.example.org/video.mp4',media=True)
+                self.assertEqual(result['passed'],passed)
+    def test_alternate_media_retains_the_failed_primary_and_same_proxy_path(self):
+        backend=Backend({'core_home':'unused','extension':'unused','core_binary':'unused','node_binary':'unused'})
+        with patch.object(backend,'_curl_retry',side_effect=[{'passed':False,'curl_exit':35},{'passed':True,'curl_exit':23}]) as probe:
+            result=backend.curl('media','https://media.w3.org/2010/05/sintel/trailer.mp4',proxy='http://127.0.0.1:12345',media=True)
+        self.assertTrue(result['passed']);self.assertFalse(result['media_samples'][0]['passed'])
+        self.assertEqual(probe.call_args_list[0].args[3],probe.call_args_list[1].args[3])
+    def test_actual_rule_api_must_include_both_domain_route_and_udp_rejection(self):
+        backend=Backend({'core_home':'unused','extension':'unused','core_binary':'unused','node_binary':'unused','protected_hosts':['api.example.org']})
+        domain={'type':'Domain','payload':'api.example.org','proxy':'中转节点'}
+        udp={'type':'AND','payload':'((Network,udp) && (Domain,api.example.org))','proxy':'REJECT'}
+        with patch.object(backend,'api',return_value={'rules':[domain,udp]}):backend.protected_rules_loaded()
+        for rules in ([domain],[udp],[]):
+            with patch.object(backend,'api',return_value={'rules':rules}),self.assertRaises(ValueError):backend.protected_rules_loaded()
     def test_api_reload_carries_verified_data_without_changing_gui_file_bindings(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);generation='a'*40;directory=root/'rules/agent-route/generations'/generation;directory.mkdir(parents=True)

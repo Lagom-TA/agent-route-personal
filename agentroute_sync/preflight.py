@@ -92,12 +92,13 @@ def supervised(home,settings,snapshot,spec,generation):
         subprocess.run(['/bin/launchctl','bootout','gui/'+str(os.getuid())+'/'+label],capture_output=True)
 
 def rotate(home,spec_file,apply=True):
-    from .mac import apply_generation,status
+    from .mac import apply_generation,status,require_exit_persistence
     home=Path(home);settings=read_json(home/'settings.json');spec=read_json(spec_file)
     if not spec or set(spec)-{'proxy','expected_ip','provider'}:raise ValueError('exit_spec_format_invalid')
     validate_exit(spec['proxy']);ipaddress.ip_address(spec['expected_ip'])
     with lock(home/'operation.lock'):
         active=read_json(home/'active.json');backend=Backend(settings);snapshot=backend.capture();backend.ready(snapshot)
+        if apply and active.get('pending_gui_persistence'):raise ValueError('previous_exit_persistence_verification_required')
         generation=active.get('generation') or '0'*40
         signature=backend.signature(snapshot)
         work,result=supervised(home,settings,snapshot,spec,generation)
@@ -106,4 +107,5 @@ def rotate(home,spec_file,apply=True):
         if not active.get('generation'):raise ValueError('rule_migration_required_first')
         from .data import verify
         cache=home/'cache'/generation;info=verify(cache,fresh=False)
-        return apply_generation(home,settings,generation,cache,info,spec['proxy'],spec['expected_ip'],lock_held=True,expected_signature=signature)
+        result=apply_generation(home,settings,generation,cache,info,spec['proxy'],spec['expected_ip'],lock_held=True,expected_signature=signature)
+        return require_exit_persistence(home,result) if result.get('status')=='HEALTHY' else result

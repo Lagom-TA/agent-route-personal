@@ -33,9 +33,12 @@ Exit preparation uses a private JSON file with `proxy` (the actual entry host, p
 ```sh
 python3 -m agentroute_sync.mac preflight --spec /private/path/new-exit.json
 python3 -m agentroute_sync.mac rotate --spec /private/path/new-exit.json
+python3 -m agentroute_sync.mac verify-persistence
 ```
 
 Preflight runs a time-limited child core bound to loopback and the physical interface, with no TUN or system-proxy changes. It builds the proposed exit using the currently selected original transit, not another chain through the old exit. Normal traffic is left on the main core. Rotation requires successful preflight and then verifies the main core after applying.
+
+A healthy exit rotation pauses automatic rule application until service persistence is verified. Open the current subscription page first, run `verify-persistence`, and click the app's “重新激活订阅” only after the command prints `READY_FOR_GUI_REACTIVATION`. This uses the app's existing owner session to stage the new exit and rule files into its protected runtime directory. The independent recovery guard is armed first. The command checks file-provider counts, unchanged core process, the exact host rules, expected exit and two rounds of actual HTTPS before resuming automation. No owner session is taken over and no administrator permissions are added.
 
 The Mac uses its existing Python 3.11+ runtime, Node runtime and system Ruby's YAML syntax tree parser. No Python packages are installed. The YAML parser preserves IPv6 literals and rejects custom object tags.
 
@@ -46,6 +49,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 Tests cover generation integrity, failed/empty/stale bundles, exact policy persistence, idempotent exit-chain rendering, changed server/port/protocol, cycle/direct escape rejection, independent timeout recovery, invalid success records, concurrent selection/subscription changes and stale exit revisions. Network deployment evidence belongs in the private local report, not this public repository.
+
+The media transport probe reads the first 1,024 bytes of a verified HTTPS MP4 stream and then closes its output. This avoids waiting for a complete video when a server ignores HTTP Range. Curl's resulting intentional write-stop (23) is accepted only with valid TLS, a video content type and an MP4 signature. If the W3C sample fails, a Google Chrome sample is tried over the same proxy path; every failed primary attempt is retained. This probe does not replace real browser playback acceptance.
 
 ## Source and retention
 

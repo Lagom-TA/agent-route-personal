@@ -50,6 +50,15 @@ def status(home, name, **details):
         notify(home,'failure',{'status':name,**details})
     return result
 
+def require_exit_persistence(home, result):
+    active=read_json(Path(home)/'active.json')
+    active.update(paused=True,revision=active['revision']+1,
+                  pending_gui_persistence={'operation':result.get('transaction'),'time':time.time()})
+    atomic_json(Path(home)/'active.json',active)
+    notify(home,'review',{'status':'EXIT_HEALTHY_PERSISTENCE_PENDING','operation':result.get('transaction')})
+    return status(home,'EXIT_HEALTHY_PERSISTENCE_PENDING',transaction=result.get('transaction'),
+                  next_step='运行 verify-persistence，看到 READY 后在 Clash Verge 中重新激活当前订阅。')
+
 def bootstrap(home, repository, policy=None):
     home=Path(home);home.mkdir(parents=True,exist_ok=True,mode=0o700);home.chmod(0o700)
     if (home/'settings.json').exists():raise ValueError('already_initialized')
@@ -95,8 +104,10 @@ def check_docs(home, settings):
     try:
         own_main=resolve(settings['repository'],'main')
         if own_main!=settings.get('code_commit'):
-            atomic_json(Path(home)/'program-review-needed.json',{'remote_commit':own_main,'installed_commit':settings.get('code_commit'),'time':time.time(),'automatically_installed':False})
+            atomic_json(Path(home)/'program-review-needed.json',{'status':'REVIEW_REQUIRED','remote_commit':own_main,'installed_commit':settings.get('code_commit'),'time':time.time(),'automatically_installed':False})
             notify(home,'review',{'program_commit':own_main,'installed_commit':settings.get('code_commit')})
+        elif (Path(home)/'program-review-needed.json').exists():
+            atomic_json(Path(home)/'program-review-needed.json',{'status':'CURRENT','remote_commit':own_main,'installed_commit':own_main,'time':time.time()})
         sha=resolve(settings['repository'],'upstream-docs')
         data=json.loads(fetch('https://raw.githubusercontent.com/'+settings['repository']+'/'+sha+'/provenance.json'))
         master=data['upstream_master']
@@ -105,6 +116,9 @@ def check_docs(home, settings):
             atomic_json(Path(home)/'review-needed.json',notice)
             atomic_bytes(Path(home)/'review-needed.md',('AgentRoute 文档/程序有变化，请复查。\n\nhttps://github.com/'+UPSTREAM+'/compare/'+settings['reviewed_upstream_master']+'...'+master+'\n\n未自动替换本机 DNS、WebRTC、模板或同步程序。\n').encode())
             notify(home,'review',{'upstream_master':master,'reviewed_master':settings['reviewed_upstream_master']})
+        elif (Path(home)/'review-needed.json').exists():
+            atomic_json(Path(home)/'review-needed.json',{'status':'CURRENT','upstream_master':master,'time':time.time()})
+        atomic_json(Path(home)/'docs-check.json',{'status':'VERIFIED','upstream_master':master,'mirror_commit':sha,'time':time.time()})
         return master
     except Exception:
         atomic_json(Path(home)/'docs-check.json',{'status':'UNVERIFIED','time':time.time()})
@@ -216,9 +230,12 @@ def check(home, apply=False, retry=False):
         for host in settings.get('protected_hosts',[]):
             if 'DOMAIN,'+host+','+backend.group not in live['config'].get('rules',[]):
                 return status(home,'REVIEW_REQUIRED',reason='local_exact_host_policy_changed')
+        try:backend.loaded(live['config'],info['counts'])
+        except ValueError:return status(home,'REVIEW_REQUIRED',reason='actual_core_rules_changed')
         return status(home,'UNCHANGED',generation=generation,network_tested=False)
     if generation in read_json(home/'held.json',{}) and not retry:
         return status(home,'HELD',generation=generation)
+    if active.get('pending_gui_persistence'):return status(home,'DEFERRED',reason='exit_persistence_verification_required')
     if active.get('paused') and not retry:return status(home,'DEFERRED',reason='paused',generation=generation)
     if not apply and not settings['automatic_apply']:return status(home,'STAGED',generation=generation)
     return apply_generation(home,settings,generation,cache,info)
@@ -254,7 +271,7 @@ def selftest(home):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['bootstrap','check','status','install-agent','watchdog','recover','selftest','pause','resume','rotate','preflight','preflight-worker','adopt-exit'])
+    parser.add_argument('command',choices=['bootstrap','check','status','install-agent','watchdog','recover','selftest','pause','resume','rotate','preflight','preflight-worker','adopt-exit','verify-persistence'])
     parser.add_argument('--home',type=Path,default=DEFAULT_HOME)
     parser.add_argument('--repository');parser.add_argument('--transaction',type=Path)
     parser.add_argument('--apply',action='store_true');parser.add_argument('--retry-held',action='store_true')
@@ -265,7 +282,7 @@ def main():
         if args.command=='bootstrap':result=bootstrap(args.home,args.repository,args.policy)
         elif args.command=='check':result=check(args.home,args.apply,args.retry_held)
         elif args.command=='status':
-            active=read_json(args.home/'active.json',{});result={'state':read_json(args.home/'status.json',{}),'generation':active.get('generation'),'egress_revision':active.get('egress_revision'),'paused':active.get('paused'),'review_required':(args.home/'review-needed.json').exists()}
+            active=read_json(args.home/'active.json',{});result={'state':read_json(args.home/'status.json',{}),'generation':active.get('generation'),'egress_revision':active.get('egress_revision'),'paused':active.get('paused'),'exit_persistence_pending':bool(active.get('pending_gui_persistence')),'review_required':any(read_json(args.home/n,{}).get('status')=='REVIEW_REQUIRED' for n in ('review-needed.json','program-review-needed.json'))}
         elif args.command=='install-agent':result=install_agent(args.home)
         elif args.command=='watchdog':result={'status':watchdog(args.transaction)}
         elif args.command=='recover':
@@ -273,7 +290,9 @@ def main():
         elif args.command=='selftest':result=selftest(args.home)
         elif args.command in ('pause','resume'):
             with lock(args.home/'operation.lock'):
-                active=read_json(args.home/'active.json');active['paused']=args.command=='pause';active['revision']+=1;atomic_json(args.home/'active.json',active)
+                active=read_json(args.home/'active.json')
+                if args.command=='resume' and active.get('pending_gui_persistence'):raise ValueError('exit_persistence_verification_required')
+                active['paused']=args.command=='pause';active['revision']+=1;atomic_json(args.home/'active.json',active)
             result={'status':'PAUSED' if args.command=='pause' else 'RESUMED'}
         elif args.command in ('rotate','preflight'):
             from .preflight import rotate
@@ -281,6 +300,9 @@ def main():
         elif args.command=='preflight-worker':
             from .preflight import worker
             result=worker(args.request)
+        elif args.command=='verify-persistence':
+            from .persistence import verify_persistence
+            result=verify_persistence(args.home)
         else:
             result=adopt_exit(args.home,args.expected_ip)
         print(json.dumps(result,ensure_ascii=False))
@@ -305,6 +327,6 @@ def adopt_exit(home,expected):
         if not result['passed']:raise ValueError('new_live_exit_not_healthy')
         active=read_json(Path(home)/'active.json');active.update(expected_ip=expected,egress_revision=egress_revision(snapshot['exit']),exit_spec=snapshot['exit'],revision=active['revision']+1,paused=False)
         atomic_json(Path(home)/'active.json',active)
-    return status(home,'EXIT_BASELINE_ADOPTED',network_configuration_changed=False)
+        return require_exit_persistence(home,{'transaction':'adopted-exit'})
 
 if __name__=='__main__':sys.exit(main())

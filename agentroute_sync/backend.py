@@ -142,8 +142,30 @@ class Backend:
             key='agentroute-'+name
             if current['rule-providers'][key]!=candidate['rule-providers'][key]:
                 raise ValueError('provider_binding_changed')
+        self.protected_rules_loaded()
+
+    def protected_rules_loaded(self):
+        hosts=self.settings.get('protected_hosts',[])
+        if not hosts:return
+        rules=self.api('GET','/rules')['rules']
+        for host in hosts:
+            if not any(r.get('type')=='Domain' and r.get('payload')==host and r.get('proxy')==self.group for r in rules):
+                raise ValueError('actual_protected_rule_missing')
+            if not any(r.get('type')=='AND' and host in r.get('payload','') and r.get('proxy')=='REJECT' for r in rules):
+                raise ValueError('actual_protected_udp_rule_missing')
 
     def curl(self, name, url, expected_ip=None, proxy=None, statuses=(200,), media=False):
+        result=self._curl_retry(name,url,expected_ip,proxy,statuses,media)
+        if media:
+            samples=[dict(result,url=url)]
+            alternate='https://chrome.dev/media-session/sintel/trailer.mp4'
+            if not result['passed'] and url!=alternate:
+                result=self._curl_retry(name,alternate,expected_ip,proxy,statuses,True)
+                samples.append(dict(result,url=alternate))
+            result=dict(result,probe=name,media_samples=samples)
+        return result
+
+    def _curl_retry(self, name, url, expected_ip=None, proxy=None, statuses=(200,), media=False):
         attempts=[]
         for attempt in range(2):
             result=self._curl_once(name,url,expected_ip,proxy,statuses,media)
@@ -158,18 +180,38 @@ class Backend:
             out=Path(work)/'body'
             args=['/usr/bin/curl','--disable','--noproxy','' if proxy else '*','-4','--http1.1','-sS','--connect-timeout','6','--max-time','14']
             if proxy: args+=['--proxy',proxy]
-            if media: args+=['--range','0-1023']
-            args += [url,'-o',str(out),'-w','%{http_code} %{ssl_verify_result}']
-            r=subprocess.run(args,capture_output=True,text=True,timeout=18)
-            parts=r.stdout.split();status=int(parts[0]) if parts and parts[0].isdigit() else 0
+            if media:
+                args+=['--range','0-1023','--location','--max-redirs','3','--proto','=https','--proto-redir','=https']
+                args += [url,'-o','-','-w','%{stderr}\nAGENTROUTE_META:%{http_code} %{ssl_verify_result} %{content_type}\n']
+                proc=subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                chunk=proc.stdout.read(1024)
+                proc.stdout.close();proc.stdout=None
+                try:_,error=proc.communicate(timeout=18)
+                except subprocess.TimeoutExpired:
+                    proc.kill();proc.communicate();raise
+                error=error.decode(errors='replace')
+                meta=error.rsplit('AGENTROUTE_META:',1)[-1] if 'AGENTROUTE_META:' in error else ''
+                code=proc.returncode
+            else:
+                args += [url,'-o',str(out),'-w','%{http_code} %{ssl_verify_result}']
+                r=subprocess.run(args,capture_output=True,text=True,timeout=18)
+                meta=r.stdout;code=r.returncode;error=r.stderr
+            parts=meta.split();status=int(parts[0]) if parts and parts[0].isdigit() else 0
             tls=int(parts[1]) if len(parts)>1 and parts[1].isdigit() else -1
-            result={'probe':name,'curl_exit':r.returncode,'http':status,'tls_verify':tls}
+            result={'probe':name,'curl_exit':code,'http':status,'tls_verify':tls}
+            if code:result['curl_error']=error.strip()
             if expected_ip is not None:
                 body=out.read_text(errors='replace') if out.exists() else ''
                 value=next((s[3:] for s in body.splitlines() if s.startswith('ip=')),None)
                 result['exit_matches']=value is not None and ipaddress.ip_address(value)==ipaddress.ip_address(expected_ip)
                 result['observed_ip']=value
-            result['passed']=r.returncode==0 and status in statuses and tls==0 and result.get('exit_matches',True)
+            if media:
+                mime=parts[2] if len(parts)>2 else ''
+                result.update(bytes_read=len(chunk),content_type=mime,read_limit_reached=len(chunk)==1024,
+                              mp4_signature=b'ftyp' in chunk[:32])
+                result['passed']=code in (0,23) and status in statuses and tls==0 and len(chunk)==1024 and mime.startswith('video/') and result['mp4_signature']
+            else:
+                result['passed']=code==0 and status in statuses and tls==0 and result.get('exit_matches',True)
             return result
 
     def health(self, expected_ip, rounds=2, proxy=None):
