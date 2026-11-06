@@ -1,0 +1,154 @@
+# AgentRoute full template for Mihomo / Clash Meta. This is NOT a subscription.
+# Merge the keys below into the existing profile; never replace the whole file.
+# Keep the user's proxies, proxy-providers, proxy-groups, ports, tun and secret.
+# Replace every PROXY (including the #PROXY suffix of DNS URLs) with the real main group.
+# When the profile comes from a subscription, read the persistence section of docs/CLIENTS.md first.
+ipv6: true
+profile:
+  store-selected: true
+  store-fake-ip: true
+sniffer:
+  enable: true
+  force-dns-mapping: false
+  parse-pure-ip: true
+  override-destination: false
+  sniff:
+    HTTP:
+      ports: [80, 8080]
+    TLS:
+      ports: [443, 8443]
+    QUIC:
+      ports: [443, 8443]
+  # Add each node's server IP here. Do not add fc00::/7: it contains the FakeIP pool below.
+  skip-dst-address:
+    - 0.0.0.0/8
+    - 10.0.0.0/8
+    - 100.64.0.0/10
+    - 127.0.0.0/8
+    - 169.254.0.0/16
+    - 172.16.0.0/12
+    - 192.168.0.0/16
+    - 224.0.0.0/4
+    - ::1/128
+    - fe80::/10
+    - ff00::/8
+dns:
+  enable: true
+  ipv6: true
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-range6: fc00::/18
+  # Add each node's server domain here as well.
+  fake-ip-filter:
+    - '*.lan'
+    - '*.local'
+    - '*.home.arpa'
+    - localhost
+    - rule-set:sr-private
+  respect-rules: true
+  default-nameserver:
+    - https://223.5.5.5/dns-query
+    - https://223.6.6.6/dns-query
+  # Node domains resolve here, so reaching a node never depends on that node.
+  proxy-server-nameserver:
+    - https://223.5.5.5/dns-query#DIRECT
+    - https://223.6.6.6/dns-query#DIRECT
+  # Keeps the per-domain resolver on the second lookup made by a DIRECT connection.
+  direct-nameserver:
+    - https://223.5.5.5/dns-query#DIRECT
+    - https://223.6.6.6/dns-query#DIRECT
+  direct-nameserver-follow-policy: true
+  nameserver:
+    - https://1.1.1.1/dns-query#PROXY
+    - https://1.0.0.1/dns-query#PROXY
+  nameserver-policy:
+    # "system" follows the OS resolver, which a client may rewrite to a public address.
+    rule-set:sr-private: [system]
+    rule-set:sr-proxy:
+      - https://1.1.1.1/dns-query#PROXY
+      - https://1.0.0.1/dns-query#PROXY
+    rule-set:sr-direct:
+      - https://223.5.5.5/dns-query#DIRECT
+      - https://223.6.6.6/dns-query#DIRECT
+    +.lan: [system]
+    +.local: [system]
+    +.home.arpa: [system]
+rule-providers:
+  sr-private:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/private.yaml
+    path: ./rules/sr-private.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-reject:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml
+    path: ./rules/sr-reject.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-proxy:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml
+    path: ./rules/sr-proxy.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-direct:
+    type: http
+    behavior: domain
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/direct.yaml
+    path: ./rules/sr-direct.yaml
+    interval: 86400
+    proxy: PROXY
+  sr-cn-ip:
+    type: http
+    behavior: ipcidr
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/cn-ip.yaml
+    path: ./rules/sr-cn-ip.yaml
+    interval: 86400
+    proxy: PROXY
+rules:
+  # User exceptions stay above this block. Add node servers next:
+  #   DOMAIN,node.example.com,DIRECT
+  #   IP-CIDR,203.0.113.10/32,DIRECT,no-resolve
+  # >>> AgentRoute managed begin
+  - DOMAIN,localhost,DIRECT
+  - DOMAIN-SUFFIX,lan,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - DOMAIN-SUFFIX,home.arpa,DIRECT
+  # A FakeIP address must never reach the ULA rule below and be treated as LAN.
+  - IP-CIDR,198.18.0.0/15,REJECT,no-resolve
+  - IP-CIDR6,fc00::/18,REJECT,no-resolve
+  - IP-CIDR6,fd00:6152::/64,REJECT,no-resolve
+  - IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - IP-CIDR6,ff00::/8,DIRECT,no-resolve
+  # Every resolver must follow its own policy, including the backups.
+  - IP-CIDR,223.5.5.5/32,DIRECT,no-resolve
+  - IP-CIDR,223.6.6.6/32,DIRECT,no-resolve
+  - IP-CIDR,1.1.1.1/32,PROXY,no-resolve
+  - IP-CIDR,1.0.0.1/32,PROXY,no-resolve
+  - RULE-SET,sr-private,DIRECT
+  - RULE-SET,sr-reject,REJECT
+  - RULE-SET,sr-proxy,PROXY
+  - RULE-SET,sr-direct,DIRECT
+  # No no-resolve here: an unknown domain must be resolved before the CN check.
+  - RULE-SET,sr-cn-ip,DIRECT
+  - MATCH,PROXY
+  # <<< AgentRoute managed end

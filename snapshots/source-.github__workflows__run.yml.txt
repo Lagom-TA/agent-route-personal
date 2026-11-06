@@ -1,0 +1,145 @@
+name: AgentRoute verified rules
+
+on:
+  workflow_dispatch:
+    inputs:
+      allow_shrink:
+        description: Publish even if a dataset lost over 30 percent (only after checking upstream)
+        type: boolean
+        default: false
+  schedule:
+    # Beijing 06:30, matching the upstream schedule.
+    - cron: '30 22 * * *'
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rules-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -B -m unittest discover -s scripts -p "test_*.py"
+      - run: python -O -B -m unittest discover -s scripts -p "test_*.py"
+      - run: python -B scripts/check_contracts.py
+  # Standard library only, so nothing installed for validation can touch these bytes.
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      manifest_sha256: ${{ steps.dataset.outputs.manifest_sha256 }}
+      stale_upstreams: ${{ steps.dataset.outputs.stale_upstreams }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Build and validate the direct dataset
+        id: dataset
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          AGENTROUTE_ALLOW_SHRINK: ${{ inputs.allow_shrink }}
+        run: |
+          python3 -B scripts/build_rules.py
+          echo "manifest_sha256=$(sha256sum generated/manifest.json | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: routing-data
+          path: generated
+          if-no-files-found: error
+          retention-days: 7
+  validate:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: routing-data
+          path: generated
+      - name: Verify with pinned official native clients
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check -r requirements-dev.txt
+          mkdir -p "$RUNNER_TEMP/rule-tools"
+          cd "$RUNNER_TEMP/rule-tools"
+          curl --fail --location --max-time 120 --output mihomo.gz https://github.com/MetaCubeX/mihomo/releases/download/v1.19.32/mihomo-linux-amd64-v1-v1.19.32.gz
+          echo '306f81e723e60ce6b828899a6fe83e1d00e9ecefb2dc8d4d849312a5bc00efdc  mihomo.gz' | sha256sum --check --strict
+          gzip -d mihomo.gz
+          chmod +x mihomo
+          curl --fail --location --max-time 120 --output sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/download/v1.14.4/sing-box-1.14.4-linux-amd64.tar.gz
+          echo '699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968  sing-box.tar.gz' | sha256sum --check --strict
+          tar -xzf sing-box.tar.gz
+          cd "$GITHUB_WORKSPACE"
+          python3 -B scripts/validate_native.py --mihomo "$RUNNER_TEMP/rule-tools/mihomo" --sing-box "$RUNNER_TEMP/rule-tools/sing-box-1.14.4-linux-amd64/sing-box"
+  # The only job with write access. It checks out no code and installs nothing:
+  # it moves the validated bytes, and only its last step ever sees the token.
+  publish:
+    needs: [build, validate]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: routing-data
+          path: publish
+      - name: Confirm these are the bytes that were built
+        working-directory: publish
+        shell: bash
+        env:
+          MANIFEST_SHA256: ${{ needs.build.outputs.manifest_sha256 }}
+        run: |
+          echo "$MANIFEST_SHA256  manifest.json" | sha256sum --check --strict
+          jq -r '.files | to_entries[] | "\(.value)  \(.key)"' manifest.json | sha256sum --check --strict --quiet
+          diff <(find . -type f | sed 's|^\./||' | LC_ALL=C sort) <( (jq -r '.files | keys[]' manifest.json; echo manifest.json) | LC_ALL=C sort)
+      - name: Publish only the validated dataset
+        working-directory: publish
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          expected=$(git ls-remote "$remote" refs/heads/release | cut -f1)
+          git init --quiet --initial-branch=direct-rules-release
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit --quiet -m 'Publish one validated routing-data generation'
+          git push "$remote" HEAD:refs/heads/release --force-with-lease="refs/heads/release:$expected"
+  # The rules are already published. Failing here is the one signal that reaches the
+  # maintainer: GitHub emails about failed runs and the build badge turns red.
+  upstream-freshness:
+    needs: [build, publish]
+    if: needs.build.outputs.stale_upstreams != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Report upstream sources that stopped updating
+        env:
+          STALE_UPSTREAMS: ${{ needs.build.outputs.stale_upstreams }}
+        run: |
+          echo "::error::No new upstream commit in 14 days: $STALE_UPSTREAMS"
+          exit 1
