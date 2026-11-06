@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "scope": "public_routing_data_only",
+  "generated_at_utc": "2026-11-06T02:43:52.298388+00:00",
+  "base_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/",
+  "manifest_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json",
+  "agent_guide_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/AGENTS.md",
+  "privacy_guide_url": "https://github.com/ryuu-restart/agent-route/blob/master/docs/DNS-WEBRTC.md",
+  "update_interval_seconds": 86400,
+  "max_source_age_seconds": 172800,
+  "order": [
+    "user-and-node-exceptions",
+    "lan",
+    "dns-server-paths",
+    "private",
+    "reject",
+    "proxy",
+    "direct",
+    "cn-ip",
+    "final-proxy"
+  ],
+  "datasets": [
+    {
+      "id": "private",
+      "action": "DIRECT",
+      "mihomo_behavior": "domain",
+      "resources": {
+        "surge": {
+          "path": "surge/private.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/private.list",
+          "sha256": "0a12195dca956080fae8d577186a5760887fda60fdc3f6a08238cd68a32c8045",
+          "entries": 132
+        },
+        "mihomo": {
+          "path": "mihomo/private.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/private.yaml",
+          "sha256": "cf90beec68da49318d2c94b5ccf1cc68b12dad979cc0bbec3ba5afb0b16ebd3a",
+          "entries": 132
+        },
+        "sing-box": {
+          "path": "sing-box/private.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/private.json",
+          "sha256": "8f859e68be575c23468a848b73ef0651505c80dcdf2180e1f2794e638ae637bb",
+          "entries": 132
+        }
+      }
+    },
+    {
+      "id": "reject",
+      "action": "REJECT",
+      "mihomo_behavior": "domain",
+      "resources": {
+        "surge": {
+          "path": "surge/reject.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/reject.list",
+          "sha256": "92d42e39fc2146fe3516c79c1869b04f324bb741d9b6b076bf7acf35c3aaaf01",
+          "entries": 198817
+        },
+        "mihomo": {
+          "path": "mihomo/reject.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml",
+          "sha256": "5381c71afa72941eac6db6a904150df46e4b31e5d20b296103abf9331c4ec0bf",
+          "entries": 198817
+        },
+        "sing-box": {
+          "path": "sing-box/reject.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.json",
+          "sha256": "4296c30616b3420a1258af71c04da77578d1210834f9466b98a41b66cedc9c3f",
+          "entries": 198817
+        }
+      }
+    },
+    {
+      "id": "proxy",
+      "action": "PROXY",
+      "mihomo_behavior": "domain",
+      "resources": {
+        "surge": {
+          "path": "surge/proxy.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/proxy.list",
+          "sha256": "11365c53763c52cc656a8a5d0eff03d840bba61b495c96ecbf1ae1495609643b",
+          "entries": 27342
+        },
+        "mihomo": {
+          "path": "mihomo/proxy.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml",
+          "sha256": "e1737a683a4478058070e55a94be888774fc215d33ceceeeaee2823f21a05c3a",
+          "entries": 27342
+        },
+        "sing-box": {
+          "path": "sing-box/proxy.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.json",
+          "sha256": "940649763a4718d44a56203a7d1f0df106edb9e0e3a06b11b5f897b5034ad52a",
+          "entries": 27342
+        }
+      }
+    },
+    {
+      "id": "direct",
+      "action": "DIRECT",
+      "mihomo_behavior": "domain",
+      "resources": {
+        "surge": {
+          "path": "surge/direct.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/direct.list",
+          "sha256": "4623d3505c3f35b3c4fe1ce483393a5fb4e984829277597dcd49fcf08db43aec",
+          "entries": 109588
+        },
+        "mihomo": {
+          "path": "mihomo/direct.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/direct.yaml",
+          "sha256": "66a93af3af6ee1244a8ebf0492590bdc8f2dbe8a78201dd30d0e4814c77906d8",
+          "entries": 109588
+        },
+        "sing-box": {
+          "path": "sing-box/direct.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/direct.json",
+          "sha256": "e090db77160b0fa52e5c082da14638d27347a50186dea38b14461a75f3226234",
+          "entries": 109588
+        }
+      }
+    },
+    {
+      "id": "cn-ip",
+      "action": "DIRECT",
+      "mihomo_behavior": "ipcidr",
+      "resources": {
+        "surge": {
+          "path": "surge/cn-ip.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/cn-ip.list",
+          "sha256": "b43c3c799cdb1ea63bd7f7246239f70f2de4fab1c5bb55a6ebbbe45730eb63f0",
+          "entries": 9647
+        },
+        "mihomo": {
+          "path": "mihomo/cn-ip.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/cn-ip.yaml",
+          "sha256": "167dd29e583920fd52342d085219da2a5011ccd65986ac3d1c93b9efbf5b949f",
+          "entries": 9647
+        },
+        "sing-box": {
+          "path": "sing-box/cn-ip.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/cn-ip.json",
+          "sha256": "913a2f5493b223ff3996c99d063838a921ab92acf136c8c6a6911216edcb6183",
+          "entries": 9647
+        }
+      }
+    }
+  ],
+  "helpers": [
+    {
+      "id": "non-cn-ip",
+      "purpose": "sing-box DNS answer filter only; not a routing dataset",
+      "path": "sing-box/non-cn-ip.json",
+      "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/non-cn-ip.json",
+      "sha256": "7693fe7bc7b10b00fc4ef43ca4f84c90babb3321024859374aaf4ea4d198149b",
+      "entries": 28026
+    }
+  ],
+  "credentials_required": false,
+  "contains_nodes": false,
+  "schemas": {
+    "index": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/schemas/index.schema.json",
+    "manifest": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/schemas/manifest.schema.json"
+  },
+  "sync_tool": {
+    "path": "scripts/sync_rules.py",
+    "minimum_python": "3.11",
+    "commands": [
+      "sync",
+      "verify",
+      "status",
+      "rollback"
+    ],
+    "edits_client_configuration": false
+  },
+  "validation_scope": {
+    "mihomo": "native_compile_and_config",
+    "sing-box": "native_compile_and_config",
+    "surge": "optional_local_check",
+    "shadowrocket": "structure_only"
+  }
+}

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "projects": [
+    {
+      "id": "Loyalsoldier/surge-rules",
+      "author": "Loyalsoldier",
+      "url": "https://github.com/Loyalsoldier/surge-rules",
+      "role": "historical",
+      "declared_licenses": [
+        "GPL-3.0"
+      ],
+      "license_urls": [
+        "https://github.com/Loyalsoldier/surge-rules/blob/master/LICENSE"
+      ],
+      "evidence": "https://github.com/Loyalsoldier/surge-rules/blob/master/README.md",
+      "license_copies": [
+        {
+          "path": "licenses/Loyalsoldier-surge-rules-LICENSE.txt",
+          "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+          "source": "https://github.com/Loyalsoldier/surge-rules/blob/master/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "Loyalsoldier/v2ray-rules-dat",
+      "author": "Loyalsoldier",
+      "url": "https://github.com/Loyalsoldier/v2ray-rules-dat",
+      "role": "direct",
+      "declared_licenses": [
+        "GPL-3.0"
+      ],
+      "license_urls": [
+        "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/LICENSE"
+      ],
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/README.md",
+      "license_copies": [
+        {
+          "path": "licenses/Loyalsoldier-v2ray-rules-dat-LICENSE.txt",
+          "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+          "source": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "Loyalsoldier/domain-list-custom",
+      "author": "Loyalsoldier",
+      "url": "https://github.com/Loyalsoldier/domain-list-custom",
+      "role": "direct",
+      "declared_licenses": [
+        "MIT"
+      ],
+      "license_urls": [
+        "https://github.com/Loyalsoldier/domain-list-custom/blob/master/LICENSE"
+      ],
+      "evidence": "https://github.com/Loyalsoldier/domain-list-custom/blob/master/README.md",
+      "license_copies": [
+        {
+          "path": "licenses/Loyalsoldier-domain-list-custom-LICENSE.txt",
+          "sha256": "35f18e0331a1ecd1835400c50e3b367c2ce09f6c13d91c4a0f3cb11f71d3bbc3",
+          "source": "https://github.com/Loyalsoldier/domain-list-custom/blob/master/LICENSE"
+        }
+      ]
+    },
+    {
+      "id": "Loyalsoldier/geoip",
+      "author": "Loyalsoldier",
+      "url": "https://github.com/Loyalsoldier/geoip",
+      "role": "direct",
+      "declared_licenses": [
+        "CC-BY-SA-4.0",
+        "GPL-3.0"
+      ],
+      "license_urls": [
+        "https://github.com/Loyalsoldier/geoip/blob/master/LICENSE",
+        "https://github.com/Loyalsoldier/geoip/blob/master/LICENSE-GPL"
+      ],
+      "evidence": "https://github.com/Loyalsoldier/geoip/blob/master/README.md",
+      "license_copies": [
+        {
+          "path": "licenses/Loyalsoldier-geoip-LICENSE.txt",
+          "sha256": "5e436ff8ffbb77d8607220e9bce20c8915d860010feeb6c1ebef5a85688e9b39",
+          "source": "https://github.com/Loyalsoldier/geoip/blob/master/LICENSE"
+        },
+        {
+          "path": "licenses/Loyalsoldier-geoip-LICENSE-GPL.txt",
+          "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+          "source": "https://github.com/Loyalsoldier/geoip/blob/master/LICENSE-GPL"
+        }
+      ]
+    },
+    {
+      "id": "v2fly/domain-list-community",
+      "author": "v2fly",
+      "url": "https://github.com/v2fly/domain-list-community",
+      "role": "indirect",
+      "declared_licenses": [
+        "MIT"
+      ],
+      "license_status": "Repository-declared; dataset notices also apply",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/v2fly/domain-list-community",
+      "license_urls": [
+        "https://github.com/v2fly/domain-list-community/blob/master/LICENSE"
+      ]
+    },
+    {
+      "id": "felixonmars/dnsmasq-china-list",
+      "author": "felixonmars",
+      "url": "https://github.com/felixonmars/dnsmasq-china-list",
+      "role": "indirect",
+      "declared_licenses": [],
+      "license_status": "See upstream; no inferred relicensing",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/felixonmars/dnsmasq-china-list"
+    },
+    {
+      "id": "gaoyifan/china-operator-ip",
+      "author": "gaoyifan",
+      "url": "https://github.com/gaoyifan/china-operator-ip",
+      "role": "indirect",
+      "declared_licenses": [
+        "MIT"
+      ],
+      "license_status": "Repository-declared; dataset notices also apply",
+      "evidence": "https://github.com/Loyalsoldier/geoip/blob/master/config.json",
+      "license_metadata_evidence": "https://api.github.com/repos/gaoyifan/china-operator-ip",
+      "license_urls": [
+        "https://github.com/gaoyifan/china-operator-ip/blob/master/LICENSE"
+      ]
+    },
+    {
+      "id": "gfwlist/gfwlist",
+      "author": "gfwlist",
+      "url": "https://github.com/gfwlist/gfwlist",
+      "role": "indirect",
+      "declared_licenses": [
+        "LGPL-2.1"
+      ],
+      "license_status": "Repository-declared; dataset notices also apply",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/gfwlist/gfwlist",
+      "license_urls": [
+        "https://github.com/gfwlist/gfwlist/blob/master/COPYING.txt"
+      ]
+    },
+    {
+      "id": "cokebar/gfwlist2dnsmasq",
+      "author": "cokebar",
+      "url": "https://github.com/cokebar/gfwlist2dnsmasq",
+      "role": "indirect",
+      "declared_licenses": [
+        "GPL-3.0"
+      ],
+      "license_status": "Repository-declared; dataset notices also apply",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/cokebar/gfwlist2dnsmasq",
+      "license_urls": [
+        "https://github.com/cokebar/gfwlist2dnsmasq/blob/master/LICENSE"
+      ]
+    },
+    {
+      "id": "easylist/easylist",
+      "author": "easylist",
+      "url": "https://github.com/easylist/easylist",
+      "role": "indirect",
+      "declared_licenses": [],
+      "license_status": "See upstream; no inferred relicensing",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/easylist/easylist"
+    },
+    {
+      "id": "easylist/easylistchina",
+      "author": "easylist",
+      "url": "https://github.com/easylist/easylistchina",
+      "role": "indirect",
+      "declared_licenses": [],
+      "license_status": "See upstream; no inferred relicensing",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/easylist/easylistchina"
+    },
+    {
+      "id": "AdguardTeam/AdGuardSDNSFilter",
+      "author": "AdguardTeam",
+      "url": "https://github.com/AdguardTeam/AdGuardSDNSFilter",
+      "role": "indirect",
+      "declared_licenses": [
+        "GPL-3.0"
+      ],
+      "license_status": "Repository-declared; dataset notices also apply",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml",
+      "license_metadata_evidence": "https://api.github.com/repos/AdguardTeam/AdGuardSDNSFilter",
+      "license_urls": [
+        "https://github.com/AdguardTeam/AdGuardSDNSFilter/blob/master/LICENSE"
+      ]
+    },
+    {
+      "id": "Peter Lowe",
+      "author": "Peter Lowe",
+      "url": "https://pgl.yoyo.org/adservers/",
+      "role": "indirect",
+      "declared_licenses": [],
+      "license_status": "See upstream terms",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml"
+    },
+    {
+      "id": "Dan Pollock",
+      "author": "Dan Pollock",
+      "url": "https://someonewhocares.org/hosts/",
+      "role": "indirect",
+      "declared_licenses": [],
+      "license_status": "See upstream terms",
+      "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml"
+    }
+  ],
+  "inputs": {
+    "china_domains": {
+      "repository": "Loyalsoldier/v2ray-rules-dat",
+      "ref": "release",
+      "path": "direct-list.txt",
+      "upstream_cadence": "upstream-controlled",
+      "transformation": "conflict filtering, exact/suffix preservation, format conversion; legacy mixed IP exports retained"
+    },
+    "foreign_domains": {
+      "repository": "Loyalsoldier/v2ray-rules-dat",
+      "ref": "release",
+      "path": "proxy-list.txt",
+      "upstream_cadence": "upstream-controlled",
+      "transformation": "conflict filtering, exact/suffix preservation, format conversion; legacy mixed IP exports retained"
+    },
+    "advertising_domains": {
+      "repository": "Loyalsoldier/v2ray-rules-dat",
+      "ref": "release",
+      "path": "reject-list.txt",
+      "upstream_cadence": "upstream-controlled",
+      "transformation": "conflict filtering, exact/suffix preservation, format conversion; legacy mixed IP exports retained"
+    },
+    "private_domains": {
+      "repository": "Loyalsoldier/domain-list-custom",
+      "ref": "release",
+      "path": "private.txt",
+      "upstream_cadence": "upstream-controlled",
+      "transformation": "conflict filtering, exact/suffix preservation, format conversion; legacy mixed IP exports retained"
+    },
+    "china_ip": {
+      "repository": "Loyalsoldier/geoip",
+      "ref": "release",
+      "path": "text/cn.txt",
+      "upstream_cadence": "weekly",
+      "transformation": "conflict filtering, exact/suffix preservation, format conversion; legacy mixed IP exports retained"
+    }
+  },
+  "license_notice": "Project LICENSE does not replace upstream license declarations. Preserve original attribution and terms."
+}
