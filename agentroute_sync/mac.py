@@ -67,6 +67,7 @@ def bootstrap(home, repository, policy=None):
     from .common import REPO
     if not REPO.fullmatch(repository):raise ValueError('repository_invalid')
     expected=backend.current_exit_ip();health=backend.health(expected)
+    atomic_json(home/'bootstrap-attempts'/(uuid.uuid4().hex+'.json'),health)
     atomic_json(home/'bootstrap-health.json',health)
     if not health['passed']:raise ValueError('baseline_health_failed_no_change')
     atomic_json(home/'settings.json',settings)

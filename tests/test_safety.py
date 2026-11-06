@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import time
 import unittest
+import urllib.error
 from unittest.mock import patch
 
 from agentroute_sync.common import atomic_json, digest, yaml_load
@@ -89,6 +90,11 @@ def bundle(root):
     return manifest,index
 
 class DataSafety(unittest.TestCase):
+    def test_transport_retry_does_not_change_source_or_hide_final_failure(self):
+        with patch('agentroute_sync.data._fetch_once',side_effect=[urllib.error.URLError('EOF'),b'validated-by-caller']) as get,patch('agentroute_sync.data.time.sleep'):
+            self.assertEqual(data.fetch('https://raw.githubusercontent.com/example/file'),b'validated-by-caller')
+            self.assertEqual(get.call_count,2)
+            self.assertEqual(get.call_args_list[0],get.call_args_list[1])
     def test_integrity_and_empty_or_corrupt_payload(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);bundle(root);self.assertEqual(data.verify(root)['counts']['proxy'],1)

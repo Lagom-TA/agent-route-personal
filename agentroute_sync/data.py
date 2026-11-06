@@ -8,6 +8,8 @@ import os
 import re
 import subprocess
 import tempfile
+import time
+import http.client
 import urllib.error
 import urllib.request
 
@@ -22,7 +24,7 @@ CORE_DIGEST = '8ec92e7b2fdc6b853ba00156bab7e4e965c8b0d843b8c4ac8ab98795f02ad524'
 DOCS = ('AGENTS.md', 'docs/CLIENTS.md', 'docs/DNS-WEBRTC.md', 'docs/SYNC.md',
         'scripts/sync_rules.py', 'examples/full/mihomo.yaml', '.github/workflows/run.yml')
 
-def fetch(url, limit=LIMIT):
+def _fetch_once(url, limit=LIMIT):
     if not url.startswith(('https://api.github.com/', 'https://raw.githubusercontent.com/', 'https://github.com/MetaCubeX/mihomo/releases/download/')):
         raise ValueError('download_origin_rejected')
     request = urllib.request.Request(url, headers={'User-Agent': 'AgentRoutePersonal/1', 'Accept': 'application/vnd.github+json' if 'api.github.com' in url else '*/*'})
@@ -41,6 +43,16 @@ def fetch(url, limit=LIMIT):
         if response.headers.get('Content-Length') and int(response.headers['Content-Length']) != len(data):
             raise ValueError('download_truncated')
         return data
+
+def fetch(url,limit=LIMIT):
+    for attempt in range(3):
+        try:
+            return _fetch_once(url,limit)
+        except urllib.error.HTTPError as error:
+            if error.code not in (429,500,502,503,504) or attempt==2:raise
+        except (urllib.error.URLError,OSError,http.client.HTTPException):
+            if attempt==2:raise
+        time.sleep(attempt+1)
 
 def resolve(repo, branch, get=fetch):
     if not REPO.fullmatch(repo) or branch not in ('master', 'release', 'rules', 'upstream-docs', 'main'):

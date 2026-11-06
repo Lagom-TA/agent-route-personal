@@ -110,6 +110,16 @@ class Backend:
                 raise ValueError('provider_binding_changed')
 
     def curl(self, name, url, expected_ip=None, proxy=None, statuses=(200,), media=False):
+        attempts=[]
+        for attempt in range(2):
+            result=self._curl_once(name,url,expected_ip,proxy,statuses,media)
+            attempts.append(dict(result))
+            if result['passed'] or result['curl_exit'] not in (7,28,35,52,56):break
+            if attempt==0:time.sleep(1)
+        result['attempts']=attempts
+        return result
+
+    def _curl_once(self, name, url, expected_ip=None, proxy=None, statuses=(200,), media=False):
         with tempfile.TemporaryDirectory(prefix='agentroute-http-') as work:
             out=Path(work)/'body'
             args=['/usr/bin/curl','--disable','--noproxy','' if proxy else '*','-4','--http1.1','-sS','--connect-timeout','6','--max-time','14']
@@ -143,7 +153,7 @@ class Backend:
                 jobs.append(('system-proxy-exit','https://www.cloudflare.com/cdn-cgi/trace',expected_ip,'http://127.0.0.1:'+str(self.settings['mixed_port']),(200,),False))
                 for host in self.settings.get('protected_hosts',[]):
                     jobs.append(('protected:'+host,'https://'+host+'/',None,None,tuple(range(200,500)),False))
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max(6,len(jobs))) as pool:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
                 futures=[pool.submit(self.curl,*args) for args in jobs]
                 while not all(f.done() for f in futures):
                     try:
