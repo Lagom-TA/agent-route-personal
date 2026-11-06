@@ -5,7 +5,7 @@ A public mirror of the upstream AgentRoute Mihomo rules, with a separate local m
 ## What runs where
 
 - GitHub Actions checks the upstream release every six hours, verifies one immutable generation, compiles it using the pinned official Mihomo 1.19.33 binary, and publishes an ordinary commit on `rules`. Upstream documentation and code are mirrored as inert `.txt` snapshots on `upstream-docs`; their original paths and hashes are recorded in provenance.
-- The Mac downloads from one pinned commit, checks integrity and its actual installed core, then loads all five local file providers in one protected transaction.
+- The Mac downloads from one pinned commit, checks integrity and its actual installed core, then loads all five datasets in one protected transaction. GUI persistence uses local file providers. A direct core API reload carries the same verified data as inline providers because Clash Verge's service core has a separate protected working directory. A normal GUI reload uses the app's own runtime bundle to stage the local files. Neither route needs administrator writes or restarting the core.
 - A separate launchd process starts recovery if an application remains unaccepted after 150 seconds. It restores a per-operation snapshot; it never relies on a fixed old exit or the agent remaining connected.
 - Local exact-host policy, exit credentials, expected IP, node definitions, and recovery material stay in a private directory outside this repository.
 - Rule application and exit rotation share a lock. Downloaded data is not applied state. Failed generations are held instead of immediately retried.

@@ -164,6 +164,20 @@ class YAMLCompatibility(unittest.TestCase):
             with self.assertRaises(ValueError):yaml_load(p)
 
 class ProbeCoverage(unittest.TestCase):
+    def test_api_reload_carries_verified_data_without_changing_gui_file_bindings(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);generation='a'*40;directory=root/'rules/agent-route/generations'/generation;directory.mkdir(parents=True)
+            bundle(directory)
+            backend=Backend({'core_home':d,'extension':'unused','core_binary':'unused','node_binary':'unused'})
+            providers={'agentroute-'+n:{'type':'file','behavior':'ipcidr' if n=='cn-ip' else 'domain','path':'./rules/agent-route/generations/'+generation+'/mihomo/'+n+'.yaml'} for n in data.IDS}
+            original={'rule-providers':providers};before=copy.deepcopy(original)
+            runtime=backend.runtime_candidate(original)
+            self.assertEqual(original,before)
+            self.assertTrue(all(v['type']=='inline' and len(v['payload'])==1 for v in runtime['rule-providers'].values()))
+            original['rule-providers']['agentroute-proxy']['path']=original['rule-providers']['agentroute-proxy']['path'].replace(generation,'b'*40)
+            with self.assertRaisesRegex(ValueError,'mixed_runtime_generation'):backend.runtime_candidate(original)
+            (directory/'mihomo/reject.yaml').write_text('payload: []')
+            with self.assertRaises(ValueError):backend.runtime_candidate(before)
     def test_preview_tests_protected_hosts_through_the_preview_proxy(self):
         backend=Backend({'core_home':'/unused','extension':'/unused','core_binary':'/unused','node_binary':'/unused',
                          'protected_hosts':['api.example.org']})

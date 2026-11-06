@@ -171,8 +171,11 @@ def apply_generation(home, settings, generation, cache, info, new_exit=None, exp
             if backend.signature(backend.capture())!=backend.signature(snapshot):
                 raise ValueError('concurrent_change_after_guard')
             atomic_bytes(backend.extension,script.encode())
+            update(tx,phase='source_persisted')
             pending(tx);backend.apply(candidate,snapshot['selected'])
+            update(tx,phase='core_applied')
             pending(tx);backend.loaded(candidate,info['counts'])
+            update(tx,phase='providers_loaded')
             actual=backend.capture()
             if actual['selected']!=snapshot['selected'] or actual['raw_digest']!=snapshot['raw_digest']:
                 raise ValueError('subscription_or_selection_changed_during_apply')
@@ -188,7 +191,8 @@ def apply_generation(home, settings, generation, cache, info, new_exit=None, exp
                             upstream_release=read_json(cache/'provenance.json')['upstream_release'])
             commit(tx,new_active)
             return status(home,'HEALTHY',generation=generation,transaction=tx.name,actual_http_validation=True)
-        except Exception:
+        except Exception as error:
+            atomic_json(tx/'application-error.json',{'error_type':type(error).__name__,'error':str(error),'time':time.time()})
             result=recover(tx)
             return status(home,result,transaction=tx.name,generation=generation)
         finally:

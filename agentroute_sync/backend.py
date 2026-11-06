@@ -11,10 +11,11 @@ import socket
 import subprocess
 import tempfile
 import time
+import uuid
 
 from .common import atomic_json, digest, identity, yaml_load
 from .adapter import extract_exit, graph_check, strip_markers
-from .data import IDS
+from .data import IDS, payload, verify
 
 def evaluate_script(source, config, node):
     js = "const fs=require('fs'),vm=require('vm');let v=JSON.parse(fs.readFileSync(0,'utf8')),c={};vm.createContext(c);vm.runInContext(v.source,c,{timeout:3000});process.stdout.write(JSON.stringify(c.main(v.config)));"
@@ -48,7 +49,10 @@ class Backend:
         if data is not None: headers['Content-Type']='application/json'
         c.request(method,endpoint,body=None if data is None else json.dumps(data,ensure_ascii=False).encode(),headers=headers)
         r=c.getresponse();raw=r.read();status=r.status;c.close()
-        if status>=300: raise RuntimeError('core_api_failed:'+str(status))
+        if status>=300:
+            private=Path(self.settings.get('diagnostic_home',Path.home()/'AgentRoute/automation'))
+            atomic_json(private/'api-errors'/(uuid.uuid4().hex+'.json'),{'method':method,'endpoint':endpoint,'status':status,'response':raw.decode(errors='replace'),'time':time.time()})
+            raise RuntimeError('core_api_failed:'+str(status))
         return json.loads(raw) if raw else None
 
     def capture(self):
@@ -86,9 +90,37 @@ class Backend:
         r=subprocess.run([self.core,'-t','-d',str(self.root),'-f',str(p)],capture_output=True,timeout=30)
         atomic_json(Path(directory)/'native-check.json',{'exit':r.returncode})
         if r.returncode: raise ValueError('native_candidate_check_failed')
+        runtime=self.runtime_candidate(candidate)
+        runtime_path=Path(directory)/'runtime-native.json';atomic_json(runtime_path,runtime)
+        result=subprocess.run([self.core,'-t','-d',str(self.root),'-f',str(runtime_path)],capture_output=True,timeout=30)
+        atomic_json(Path(directory)/'runtime-native-check.json',{'exit':result.returncode})
+        if result.returncode:raise ValueError('native_runtime_candidate_check_failed')
+
+    def runtime_candidate(self, candidate):
+        runtime=copy.deepcopy(candidate)
+        providers=runtime.get('rule-providers',{})
+        local=[n for n in IDS if providers.get('agentroute-'+n,{}).get('type')=='file']
+        if not local:return runtime
+        if set(local)!=set(IDS):raise ValueError('partial_managed_file_generation')
+        generations=set()
+        for name in IDS:
+            value=providers['agentroute-'+name]['path']
+            match=re.fullmatch(r'\./rules/agent-route/generations/([a-f0-9]{40})/mihomo/'+name+r'\.yaml',value)
+            if not match:raise ValueError('managed_file_path_changed')
+            generations.add(match.group(1))
+        if len(generations)!=1:raise ValueError('mixed_runtime_generation')
+        root=self.root/'rules/agent-route/generations'/next(iter(generations))
+        verify(root,fresh=False)
+        for name in IDS:
+            providers['agentroute-'+name]={'type':'inline','behavior':'ipcidr' if name=='cn-ip' else 'domain',
+                                          'payload':payload((root/'mihomo'/(name+'.yaml')).read_bytes())}
+        return runtime
 
     def apply(self, candidate, selected):
-        self.api('PUT','/configs',{'payload':json.dumps(candidate,ensure_ascii=False)},timeout=20)
+        # Service mode has its own protected -d directory. GUI reloads stage local
+        # files through the app's owner session; direct API reloads must carry data.
+        runtime=self.runtime_candidate(candidate)
+        self.api('PUT','/configs',{'payload':json.dumps(runtime,ensure_ascii=False)},timeout=20)
         # Generated config is also kept on disk for source/compatibility checks.
         atomic_json(self.root/'clash-verge.yaml',candidate)
         current=self.api('GET','/proxies')['proxies']
@@ -100,6 +132,8 @@ class Backend:
 
     def loaded(self, candidate, counts):
         actual=self.api('GET','/providers/rules')['providers']
+        private=Path(self.settings.get('diagnostic_home',Path.home()/'AgentRoute/automation'))
+        atomic_json(private/'last-loaded-counts.json',{'actual':{n:actual.get('agentroute-'+n,{}).get('ruleCount') for n in IDS},'expected':counts,'time':time.time()})
         for name in IDS:
             if actual.get('agentroute-'+name,{}).get('ruleCount')!=counts[name]:
                 raise ValueError('actual_rules_not_loaded:'+name)
