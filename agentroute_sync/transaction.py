@@ -81,7 +81,7 @@ def recover(tx, manual=False):
     if pid!=os.getpid() and process_start(pid)==record['owner_started']:
         try:os.kill(pid,signal.SIGTERM)
         except ProcessLookupError:pass
-    settings=read_json(home/'settings.json');backend=Backend(settings)
+    settings=read_json(home/'settings.json');backend=Backend(dict(settings,control_timeout=3))
     try:
         if digest((tx/'snapshot.json').read_bytes())!=record['snapshot_digest']:
             raise ValueError('rollback_snapshot_corrupt')
@@ -91,8 +91,17 @@ def recover(tx, manual=False):
             raise ValueError('concurrent_extension_change_no_overwrite')
         # A GUI subscription refresh may legitimately update nodes while the transaction is open.
         # Re-evaluate the previous extension against current input rather than overwriting the subscription.
-        current=backend.capture()
         old_source=(tx/'source-before.js').read_text()
+        try:
+            current=backend.capture()
+        except Exception:
+            # Restore persistent files even if the local core is unavailable.
+            # Never restart the app or claim restored network without evidence.
+            atomic_bytes(backend.extension,old_source.encode())
+            atomic_json(backend.root/'clash-verge.yaml',snapshot['config'])
+            try:backend.apply(snapshot['config'],snapshot['selected'])
+            except Exception:pass
+            raise RuntimeError('persistent_snapshot_restored_core_unconfirmed')
         original_input=dict(current['config'])
         original_input['proxies']=[p for p in original_input.get('proxies',[]) if p['name'] not in snapshot['owned_aliases'] and not p.get('agentroute-generated')]
         restored=evaluate_script(old_source,original_input,backend.node)
@@ -121,6 +130,9 @@ def recover(tx, manual=False):
         atomic_json(home/'status.json',{'status':state,'transaction':tx.name,'time':time.time()})
         return state
     except Exception as error:
+        active=read_json(home/'active.json',{})
+        if active:
+            active['paused']=True;active['revision']=active.get('revision',0)+1;atomic_json(home/'active.json',active)
         update(tx,state='RECOVERY_UNCONFIRMED',recovery_error=type(error).__name__+':'+str(error))
         atomic_json(home/'status.json',{'status':'RECOVERY_UNCONFIRMED','transaction':tx.name,'time':time.time()})
         return 'RECOVERY_UNCONFIRMED'

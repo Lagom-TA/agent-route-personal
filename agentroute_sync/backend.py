@@ -33,6 +33,7 @@ class Backend:
         self.group = settings.get('group','中转节点')
 
     def api(self, method, endpoint, data=None, timeout=12):
+        timeout=min(timeout,self.settings.get('control_timeout',timeout))
         cfg = yaml_load(self.root / 'clash-verge.yaml')
         paths = ['/var/run/clash-verge-service/users/%s/verge-mihomo.sock' % os.getuid(), cfg.get('external-controller-unix','')]
         sock = next((p for p in paths if p and Path(p).exists()), None)

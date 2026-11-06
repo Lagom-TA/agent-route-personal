@@ -48,5 +48,14 @@ class RecoveryTests(unittest.TestCase):
                 self.assertEqual(transaction.recover(tx),'RECOVERY_UNCONFIRMED')
             self.assertEqual(fake.extension.read_text(),'user concurrent edit')
             self.assertFalse(hasattr(fake,'applied'))
+    def test_unavailable_core_still_restores_persistent_files_and_pauses(self):
+        with tempfile.TemporaryDirectory() as home:
+            tx,fake,_=self.fixture(home);fake.root=Path(home)
+            fake.capture=lambda: (_ for _ in ()).throw(RuntimeError('offline control'))
+            fake.apply=lambda *args: (_ for _ in ()).throw(RuntimeError('offline control'))
+            with patch('agentroute_sync.transaction.Backend',return_value=fake):
+                self.assertEqual(transaction.recover(tx),'RECOVERY_UNCONFIRMED')
+            self.assertEqual(fake.extension.read_text(),'old source')
+            self.assertTrue(json.loads((Path(home)/'active.json').read_text())['paused'])
 
 if __name__=='__main__':unittest.main()
