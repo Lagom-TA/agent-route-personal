@@ -13,6 +13,7 @@ from agentroute_sync.common import atomic_json, digest, yaml_load
 from agentroute_sync import adapter, data, transaction
 from agentroute_sync.backend import Backend
 from agentroute_sync.notices import notify
+from agentroute_sync.mirror import doc_snapshot_path
 
 LEGACY = r'''
 const routingData={group:'中转节点',defaultTransit:'airport',domains:['+.cn'],cncidrs:['1.0.1.0/24'],lanRules:['DOMAIN-SUFFIX,lan,DIRECT','IP-CIDR,198.18.0.0/16,DIRECT,no-resolve']};
@@ -92,6 +93,14 @@ def bundle(root):
     return manifest,index
 
 class DataSafety(unittest.TestCase):
+    def test_upstream_code_is_stored_as_inert_text_outside_workflow_paths(self):
+        for name in data.DOCS:
+            stored=doc_snapshot_path(name)
+            self.assertTrue(stored.startswith('snapshots/source-'))
+            self.assertTrue(stored.endswith('.txt'))
+            self.assertNotIn('.github/workflows/',stored)
+            self.assertFalse(any(part.startswith('.') for part in Path(stored).parts))
+        with self.assertRaises(ValueError):doc_snapshot_path('../untrusted')
     def test_transport_retry_does_not_change_source_or_hide_final_failure(self):
         with patch('agentroute_sync.data._fetch_once',side_effect=[urllib.error.URLError('EOF'),b'validated-by-caller']) as get,patch('agentroute_sync.data.time.sleep'):
             self.assertEqual(data.fetch('https://raw.githubusercontent.com/example/file'),b'validated-by-caller')

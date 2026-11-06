@@ -4,7 +4,7 @@ A public mirror of the upstream AgentRoute Mihomo rules, with a separate local m
 
 ## What runs where
 
-- GitHub Actions checks the upstream release every six hours, verifies one immutable generation, compiles it using the pinned official Mihomo 1.19.33 binary, and publishes an ordinary commit on `rules`. Upstream documentation is mirrored as data on `upstream-docs`.
+- GitHub Actions checks the upstream release every six hours, verifies one immutable generation, compiles it using the pinned official Mihomo 1.19.33 binary, and publishes an ordinary commit on `rules`. Upstream documentation and code are mirrored as inert `.txt` snapshots on `upstream-docs`; their original paths and hashes are recorded in provenance.
 - The Mac downloads from one pinned commit, checks integrity and its actual installed core, then loads all five local file providers in one protected transaction.
 - A separate launchd process starts recovery if an application remains unaccepted after 150 seconds. It restores a per-operation snapshot; it never relies on a fixed old exit or the agent remaining connected.
 - Local exact-host policy, exit credentials, expected IP, node definitions, and recovery material stay in a private directory outside this repository.

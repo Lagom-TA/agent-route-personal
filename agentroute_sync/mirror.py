@@ -12,6 +12,11 @@ import tempfile
 from .common import atomic_bytes, atomic_json, digest, run_checked
 from .data import UPSTREAM, IDS, DOCS, fetch, resolve, download, verify, native_validate, install_ci_core
 
+def doc_snapshot_path(name):
+    if name not in DOCS:raise ValueError('untracked_document')
+    # Inert text snapshots: never publish upstream code as our executable workflow.
+    return 'snapshots/source-' + name.replace('/', '__') + '.txt'
+
 def public_files(root):
     root = Path(root)
     manifest = json.loads((root / 'manifest.json').read_text())
@@ -35,9 +40,10 @@ def prepare(out, core=None):
     hashes = {}
     for name in DOCS:
         raw = fetch('https://raw.githubusercontent.com/' + UPSTREAM + '/' + master + '/' + name)
-        atomic_bytes(docs / name, raw)
+        atomic_bytes(docs / doc_snapshot_path(name), raw)
         hashes[name] = digest(raw)
-    atomic_json(docs / 'provenance.json', {'schema_version': 1, 'upstream_master': master, 'files': hashes})
+    atomic_json(docs / 'provenance.json', {'schema_version': 1, 'upstream_master': master, 'files': hashes,
+                                        'storage':{name:doc_snapshot_path(name) for name in DOCS}})
     return {'upstream_release': release, 'upstream_master': master, **result}
 
 def publish_branch(repo, branch, source):
@@ -47,11 +53,13 @@ def publish_branch(repo, branch, source):
         names = public_files(source)
     elif branch == 'upstream-docs':
         meta = json.loads((source / 'provenance.json').read_text())
-        names = list(DOCS) + ['provenance.json']
+        names = [doc_snapshot_path(name) for name in DOCS] + ['provenance.json']
         if set(meta['files']) != set(DOCS):
             raise ValueError('doc_inventory_invalid')
+        if meta.get('storage')!={name:doc_snapshot_path(name) for name in DOCS}:
+            raise ValueError('doc_storage_invalid')
         for name, expected in meta['files'].items():
-            if digest((source / name).read_bytes()) != expected:
+            if digest((source / doc_snapshot_path(name)).read_bytes()) != expected:
                 raise ValueError('doc_hash_mismatch')
     else:
         raise ValueError('publish_branch_invalid')
