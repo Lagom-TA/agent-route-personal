@@ -64,7 +64,9 @@ private 为通用内网域名；direct 只含域名，cn-ip 只含公网中国 I
 | Surge | 加密 DNS 默认直连，不经过规则。开启 `encrypted-dns-follow-outbound-mode` 后，命中的节点地址如果是域名，这条连接仍回退直连 | [手册](https://manual.nssurge.com/dns/encrypted-dns.html) |
 | Surge | 模块里的规则只能用 DIRECT、REJECT 等内置策略，代理规则放不进去 | [手册](https://manual.nssurge.com/profile/module.html) |
 | Mihomo | `respect-rules` 要配 `proxy-server-nameserver`，否则节点解析可能依赖节点自身。设置 `direct-nameserver` 后，直连的二次解析默认不遵循 `nameserver-policy`，内网名可能被发给它 | [文档](https://wiki.metacubex.one/config/dns/) |
-| Clash Verge Rev | 扩展配置写到的 `dns` 字段整段替换，包括 `nameserver-policy`。`ipv6`、`tun.enable` 等由设置页控制，写在扩展里会被丢弃 | [文档](https://www.clashverge.dev/guide/extend.html) |
+| Clash Verge Rev | v2.5.5 起，扩展配置只替换 `dns` 下写出的子字段，未写的保留；写出 `nameserver-policy` 会替换整个策略表，不逐条合并。`ipv6`、`tun.enable` 等设置页接管的字段会在末尾回写 | [文档](https://www.clashverge.dev/guide/extend.html)、[v2.5.10 合并代码](https://github.com/clash-verge-rev/clash-verge-rev/blob/c83f7ad529c7c9cb3d2d54a0955ef8c1b22a411b/src-tauri/src/enhance/merge.rs#L19) |
+| Clash Verge Rev | v2.5.10 先处理规则编辑器，再执行全局扩展和订阅扩展；后续脚本直接 prepend 托管块，会把它放到编辑器中的用户例外前。可在同一“编辑规则”入口按“用户例外 → 托管规则”排列 prepend，再核对后续扩展及最终生成配置 | 2026-11 核对 [v2.5.10 执行顺序](https://github.com/clash-verge-rev/clash-verge-rev/blob/c83f7ad529c7c9cb3d2d54a0955ef8c1b22a411b/src-tauri/src/enhance/mod.rs#L916) |
+| Clash Verge Rev | v2.5.10 开启 DNS 覆写时，实际接管的 DNS 字段和 hosts 会在扩展之后恢复。2026-11-06 官方网页对此与该版本源码描述不同，不能只凭“扩展后执行”认定能覆盖设置；按实际版本核对最终配置 | [v2.5.10 回写代码与测试](https://github.com/clash-verge-rev/clash-verge-rev/blob/c83f7ad529c7c9cb3d2d54a0955ef8c1b22a411b/src-tauri/src/enhance/mod.rs#L1439)，未经本项目实机验证 |
 | FlClash | “DNS覆写”“追加系统DNS”会改变订阅里的 DNS 策略 | 2026-10 实测，[代码](https://github.com/chen08209/FlClash/blob/main/lib/common/task.dart) |
 | FlClash | “自动设置系统DNS”把 `223.5.5.5` 写进系统设置。网络的 DNS 来自 DHCP 时，系统里就只剩这个公网地址，Mihomo 的 `system` 随之指向公网，内网名会发给它 | 2026-11 本机核对，[代码](https://github.com/chen08209/FlClash/blob/v0.9.2/lib/common/system_dns.dart) |
 | FlClash | “查找进程”关闭时 `find-process-mode` 为 off，会覆盖订阅里的值，PROCESS 规则不生效 | 2026-11 本机核对 |

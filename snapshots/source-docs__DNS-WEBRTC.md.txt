@@ -20,7 +20,16 @@
 
 ### 内网解析判断
 
-应用前查清 system/local、回环 stub 的实际上游。客户端可能在运行时改写系统 DNS，要同时看系统当前的 DNS 和 DHCP 下发值（macOS 用 `scutil --dns` 和 `ipconfig getpacket en0`）。路由器之后的转发设备看不到，不要求追查，在报告里注明即可。
+应用前查清 system/local、回环 stub 的实际上游。客户端可能在运行时改写系统 DNS，要对照系统当前 DNS 与可取得的 DHCP 下发值，按实际联网接口区分物理网卡和 TUN 网卡，不固定接口名或虚拟 DNS 地址。路由器之后的转发设备看不到，不要求追查，在报告里注明即可。
+
+| 系统 | 只读检查与边界 |
+| --- | --- |
+| macOS | `scutil --dns` 查看当前解析器；`ipconfig getpacket <实际接口>` 查看该接口的 DHCPv4 数据。将占位符换成当前物理接口，不假定是 `en0`；无 DHCP 租约时不能据此取得下发值，IPv6 另查 |
+| Windows | [Get-DnsClientServerAddress](https://learn.microsoft.com/en-us/powershell/module/dnsclient/get-dnsclientserveraddress) 查看各接口的 IPv4 / IPv6 DNS，物理与 TUN 接口都要辨认；`netsh interface ipv4 show dnsservers` 辅助查看接口 DNS 配置（[说明](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/netsh-interface)） |
+| Windows IPv4 来源线索 | 注册表 `HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\{GUID}` 的 `NameServer` / `DhcpNameServer` 仅作静态配置与 DHCP 来源线索，先对应当前接口；可能缺失或残留，不能判断由谁修改，也不能证明当前查询路径 |
+| Windows 系统 DoH | [Get-DnsClientDohServerAddress](https://learn.microsoft.com/en-us/powershell/module/dnsclient/get-dnsclientdohserveraddress) 查看已知服务器的 DoH 配置，核对 `AutoUpgrade`、`AllowFallbackToUdp` 与当前实际使用的解析器；列出服务器不代表正在使用 DoH，也不代表浏览器独立安全 DNS 或查询出站已验证 |
+
+这些结果用于辨认配置来源，仍须结合日志与实际查询核实路径。命令不可用、DHCP 值缺失或证据不足时，相应项记未验证，不据此判通过。
 
 | 观察 | 判断与处理 |
 | --- | --- |
@@ -104,6 +113,7 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 恢复：配置前像、浏览器原选项、用户可独立执行的恢复方法及其文件路径
 最终状态与缺口：完整通过 / 部分完成 / 等待用户 / 失败已回退；具体下一步
 后续更新：已提醒经常更新；规则如何刷新；模板和说明怎么跟进（拉分支同步 / VPS 定期拉取 / 定期手动复查 / 尚未决定）；报告文件路径
+项目反馈：发现的问题、已提交或补充的 Issue 链接；未提交时写明原因及本地草稿路径
 ```
 
 查询到的最新发布 SHA 不等于客户端已加载的 SHA；只观察到更新时间时如实记录，严格同代需求见 [SYNC](SYNC.md)。报告脱敏，区分亲自观察、用户回传和未验证结果；结论只对本次实际范围负责。
