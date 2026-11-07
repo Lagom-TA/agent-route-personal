@@ -53,8 +53,11 @@ dns:
   proxy-server-nameserver:
     - https://223.5.5.5/dns-query#DIRECT
     - https://223.6.6.6/dns-query#DIRECT
-  # Keep domain-based DNS policy even when China-IP fallback routes the connection DIRECT.
+  # Keep domain-based DNS policy even when an IP rule routes the connection DIRECT.
   # Explicitly clear a separately configured direct resolver when merging this example.
+  # That also moves the profile's own domain-based DIRECT rules (user exceptions such as
+  # DOMAIN-SUFFIX,cn) to nameserver: give each a nameserver-policy entry for the same
+  # domains with the resolver it used before, or report the change and let the user choose.
   direct-nameserver: []
   nameserver:
     - https://1.1.1.1/dns-query#PROXY
@@ -150,7 +153,10 @@ rules:
   - RULE-SET,sr-reject,REJECT
   - RULE-SET,sr-proxy,PROXY
   - RULE-SET,sr-direct,DIRECT
-  # No no-resolve here: an unknown domain must be resolved before the CN check.
-  - RULE-SET,sr-cn-ip,DIRECT
+  # no-resolve: the core tests only one resolved address (IPv4 first), so a domain whose
+  # answers mix China and other addresses would go DIRECT. Unknown domains therefore use
+  # the default proxy; this still matches connections that arrive with a real address.
+  # Dropping no-resolve breaks that goal: report it as a limit and let the user choose.
+  - RULE-SET,sr-cn-ip,DIRECT,no-resolve
   - MATCH,PROXY
   # <<< AgentRoute managed end

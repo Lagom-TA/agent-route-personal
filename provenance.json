@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "upstream_master": "8c248b5ab62a34f477febaf325d3f05274419596",
+  "upstream_master": "0b3c812093c94203907dccfcf8efe5f97825b7da",
   "files": {
     "AGENTS.md": "407178be8af12b152a0a42ff8bacb19520491e58796271666a0a7106b219e39a",
-    "docs/CLIENTS.md": "ba05c4e3e5359820dc169b54fcf1dd1d4f7c412a21bdfbed870e4b93626c26a5",
-    "docs/DNS-WEBRTC.md": "339aec41200c85f2a0e24f391a846d1b22c5954046b05a8c634fd7b4826da1ee",
+    "docs/CLIENTS.md": "8fc4a3a934407ae1e8bb5f3d5fd6d3715b2a300c78582acb70fee7860c22eac9",
+    "docs/DNS-WEBRTC.md": "f97f8024b0f5afcdb0f1f3efd3ebef93d5c383c774b48864c16c8eda1b798a63",
     "docs/SYNC.md": "3542f89b0d3bd1624c9b43896c82cb8909c0edc0b103795fcd89e98094d7a331",
     "scripts/sync_rules.py": "1946a808608f19652766938bdc8723451e178fc31da2d41a5bcace0103668052",
-    "examples/full/mihomo.yaml": "bae8270f5350815b18d8ed711f1088e7ec6ee9d1735c36effa76cc44db5529ac",
+    "examples/full/mihomo.yaml": "95236e253b09622fdeb401d8cdb4bd2288023043fcb3f4c26c7f4f4557d8107f",
     ".github/workflows/run.yml": "200bac697f9845d0c6b6ff37f2daef559d6c4a554407c1fd21580f62e17d9d86"
   },
   "storage": {
