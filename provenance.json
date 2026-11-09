@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "upstream_repository": "ryuu-restart/agent-route",
-  "upstream_release": "01a5a575f63bd2f0b71d857c78a8325c3f99f99a",
+  "upstream_release": "239733096b3ff62b890e3bbd99481c9f7a348494",
   "upstream_master": "0b3c812093c94203907dccfcf8efe5f97825b7da",
-  "generated_at_utc": "2026-11-08T01:42:37.692549+00:00",
+  "generated_at_utc": "2026-11-09T01:51:03.967681+00:00",
   "publisher_version": 1
 }
