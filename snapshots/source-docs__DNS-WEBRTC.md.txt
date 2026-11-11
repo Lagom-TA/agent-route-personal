@@ -57,10 +57,10 @@
 - 在实际使用的浏览器配置档中取证，现用代理保持开启。测试端点使用用户认可的 STUN / TURN；不使用未知 TURN 凭据，报告不公开完整网络地址。
 - 测试端点的去向按本次实际规则核对：先过用户规则，再按后缀逐级查它命中哪个名单，不沿用文档或以往报告中的名单归属。走代理的端点才能说明代理路径是否被绕过；国内端点按 direct 走，看到本机出口是分流结果，不算泄露。
 - relay 是中继地址，代理也可能有多个出口，不要求所有候选与 HTTP 出口字面相等；mDNS host 名称不证明公网路径已受保护。
-- 不符合目标时，按该浏览器支持的策略或扩展处理并复测；核对实际生效的策略值，不绑定扩展版本、选项名称或位置。其他浏览器按其能力处理，不套用 Chrome 的结论。
-- 安装、重启或可能暴露额外出口的对照，先说明影响并取得同意；不绕过组织控制，不默认关闭整套 WebRTC 功能。处理后核对持久化和用户实际需要的通话功能。
+- 接入时按[浏览器检测与更新](../AGENTS.md#浏览器检测与更新)向使用者提供每个目标浏览器的官方配置教程，由使用者操作并用同一配置档自测。复查按各配置档实际生效的策略及路径取证。
+- 安装、重启或可能暴露额外出口的对照应在相应授权内执行，并先说明影响。遵守受管策略，限制 WebRTC 网络路径时保留用户需要的功能。处理后核对持久化和实际需要的通话功能。
 
-候选收集工具、Chrome / Chromium 的策略入口和排查方向见[参考方法](#webrtc-methods)。
+候选收集工具、浏览器官方教程和排查方向见[参考方法](#webrtc-methods)。
 
 | 观察 | 判断 |
 | --- | --- |
@@ -135,8 +135,8 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 
 **WebRTC**
 
-- 通过：在目标浏览器配置档中，先确认 STUN 测试端点在本次规则下走代理，再收集候选：host 候选只有 mDNS 名称或私有地址，没有公网 IPv4 或全局 IPv6；srflx 候选属于该配置档普通 HTTPS 的代理出口；relay 候选来自用户认可的 TURN。用户需要的音视频功能已确认可用，或已记录用户的取舍。
-- 需要：外部（候选列表）+ 运行或规则核对（测试端点的去向）。
+- 通过：在每个目标浏览器实际使用的配置档中，先确认 STUN 测试端点在本次规则下走代理，再收集候选：host 候选只有 mDNS 名称或私有地址，没有公网 IPv4 或全局 IPv6；srflx 候选属于该配置档普通 HTTPS 的代理出口；relay 候选来自用户认可的 TURN。接入或调整防护时，回读各配置档实际生效的策略。用户需要的音视频功能已确认可用，或已记录用户的取舍。
+- 需要：外部（候选列表）+ 运行或规则核对（测试端点的去向）。接入或调整防护时另需配置（实际生效的策略）。
 - 不能单独证明：零候选、页面空白、扩展已安装、策略已设置、TUN 已开启。零候选按上方判断表做对照，证据仍不足记未验证。
 - 失败：候选中出现未经认可的本机公网地址。代理有多个出口而无法确认 srflx 归属时记未验证。
 - 不适用：设备没有浏览器。无法操作目标浏览器且没有用户回传时记未验证。
@@ -213,6 +213,8 @@ ECS 可由客户端或中间解析器生成、转发或修改，并非连接源�
 
 - 候选收集：用用户认可的 STUN / TURN 端点，例如官方 [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/) 页面；同时在同一配置档确认普通 HTTPS 的出口，供判断 srflx 归属。
 - 测试端点去向：按后缀逐级查它在本次规则中命中的名单，先过用户规则。公共 STUN 主机名的名单归属随规则发布变化，以本次查到的为准。
-- Chrome / Chromium：官方 [WebRTC Network Limiter](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia)及 [IP handling policy](https://developer.chrome.com/docs/extensions/reference/api/privacy)。核对实际策略值；历史观察见[可选证据](CLIENT-EVIDENCE.md#客户端案例)。
+- 支持 Chrome 应用商店扩展的浏览器可安装 WebRTC Network Limiter。使用者打开扩展选项，选择对应 `disable_non_proxied_udp` 的设置。0.2.1.4 显示为「Use my proxy server (if present)」。核对实际版本、策略值与流量表现。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia) · [Chrome 安装教程](https://support.google.com/chrome_webstore/answer/2664769?hl=zh-Hans) · [Edge 安装教程](https://support.microsoft.com/zh-cn/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) · [Chrome 策略](https://developer.chrome.com/docs/extensions/reference/api/privacy) · [可选证据](CLIENT-EVIDENCE.md#客户端案例)
+- Firefox 按实际版本核对支持的扩展和 WebRTC 策略。使用者按核实后的步骤配置并复测。[Firefox 安装附加组件](https://support.mozilla.org/zh-CN/kb/find-and-install-add-ons-add-features-to-firefox) · [Firefox WebExtensions 策略](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network)
+- Safari 按平台核对有无支持相同防护目标的设置或扩展。核实到可用方案后，把适用的教程交给使用者。[Mac Safari 扩展教程](https://support.apple.com/zh-cn/102343) · [iPhone Safari 扩展教程](https://support.apple.com/zh-cn/guide/iphone/-iphab0432bf6/ios)
 - 处理后结果不符时，检查扩展冲突、配置档权限和受管策略。
 - 零候选对照：获准后，在同一设备开一个无扩展的临时浏览器配置档，现用代理和 TUN 都不动，确认 STUN 可达，再和原配置档比较。
