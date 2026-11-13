@@ -66,6 +66,7 @@
 | --- | --- |
 | 证实存在未经认可的本地公网 IPv4 / IPv6 直连暴露 | 记为失败。修复后重测，无法修复时记录缺口并核实相关改动的恢复结果 |
 | 候选符合[逐项验收](#acceptance)的 WebRTC 条件，测试端点工作正常 | 该轮路径检查通过；不扩大到未测设备、网络或通话能力 |
+| 用户已接受完全停用，且原生设置回读与新页面的 PeerConnection 接口检查一致 | 单列“WebRTC 已停用”，说明网页通话及数据通道受限；IP、DNS 仍须检测，不据此宣称代理路径或完整设备验收通过 |
 | 没有公网候选、零候选或页面空白 | 不单独判通过。获准后可做隔离对照，现用代理和 TUN 都不动，做法见[参考方法](#webrtc-methods)。证据仍不足则未验证 |
 | 没有浏览器 / 无法操作目标浏览器 | 没有浏览器时记不适用。无法操作时说明限制，未取得实际证据的检测项记未验证 |
 
@@ -214,11 +215,76 @@ ECS 可由客户端或中间解析器生成、转发或修改，并非连接源�
 
 ### WebRTC 取证与处理入口
 
+先识别浏览器、平台、版本与实际使用的配置档，再选择适用方法。以下是有官方资料或浏览器源码依据的入口，不代表已在所有版本实机通过。Chrome 和 Edge 固定使用 WebRTC Network Limiter；其他浏览器缺少该扩展安装能力时，继续查对应浏览器的原生设置或策略。Agent 在已有授权内完成配置。
+
+#### 按浏览器选择方法
+
+| 浏览器 | Agent 可采用的入口 | 生效核对与限制 |
+| --- | --- | --- |
+| 桌面 Chrome | WebRTC Network Limiter，选择 Use my proxy server (if present)，对应 `disable_non_proxied_udp` | 核对扩展启用状态、实际值及控制权；无法完成时标明原因和待配置状态。[扩展接口](https://developer.chrome.com/docs/extensions/reference/api/privacy) |
+| 桌面 Edge | 同一扩展、同一选项和策略值 | 核对实际配置档中的扩展启用和生效设置；受限时标明待配置。[扩展安装](https://support.microsoft.com/zh-cn/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) |
+| 桌面 Brave | 同一扩展；内置入口为 Settings → Privacy and security → WebRTC IP Handling Policy → Disable Non-Proxied UDP | 核对扩展是否接管设置，避免互相覆盖；该选项限制非代理 UDP，不等于关闭整个 WebRTC。[Brave 官方设置](https://support.brave.app/hc/en-us/articles/360017989132-How-do-I-change-my-Privacy-Settings) |
+| 桌面 Opera | 按官方 Chrome 扩展安装入口尝试 WebRTC Network Limiter，启用并设置 `disable_non_proxied_udp` | 官方支持 Chrome 扩展安装不等于保证某扩展在所有版本可用；核对当前商店兼容性、扩展控制权及实际值。[Opera 官方安装和管理说明](https://help.opera.com/en/faq/) |
+| 桌面 Firefox | 需要保留 WebRTC 时核对 Firefox 的策略与代理；已接受停用时使用下述原生开关 | Firefox 的同名 `disable_non_proxied_udp` 在未配置浏览器代理时允许非代理连接，不能直接沿用 Chromium 的判断。[Mozilla 策略接口](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network) · [行为说明](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/70#api_changes) |
+| Safari | 优先在已获准范围内处理现用客户端的 UDP、IPv6 接管；需要完全停用时另行评估锁定模式 | 锁定模式有源码依据，但影响整个设备，不作为默认接入动作；实际版本、站点例外及结果须复查。[Safari 具体方案](#safari-webrtc) |
+
+使用官方策略时，先确认该平台、版本与配置档受其支持，记录原值、来源和适用范围；不得为配置 WebRTC 擅自接入设备管理或覆盖组织策略。管理页显示写入成功仍需核对实际生效值、重启要求、扩展冲突及站点例外。浏览器品牌相同也不代表桌面和移动端具有相同能力。
+
+#### 扩展安装与回读
+
+支持的浏览器由 Agent 在目标配置档安装或启用 [WebRTC Network Limiter](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia)，选择对应 `disable_non_proxied_udp` 的设置。0.2.1.4 显示为「Use my proxy server (if present)」。按实际版本核对，不把这一文案当作其他扩展通用的选项名。[Chrome 安装教程](https://support.google.com/chrome_webstore/answer/2664769?hl=zh-Hans)
+
+在支持该接口的扩展环境中回读 `privacy.network.webRTCIPHandlingPolicy` 的值和 `levelOfControl`。Chrome 官方说明：设置调用即使成功，也可能立即被企业策略或其他扩展覆盖。遇到 `not_controllable` 或 `controlled_by_other_extensions` 时，确认实际控制来源；不能仅凭扩展选项勾选成功交付。无权修改的来源保留并报告限制。[Chrome 扩展接口](https://developer.chrome.com/docs/extensions/reference/api/privacy)
+
+#### Firefox 原生停用与保留功能两条路径
+
+若用户已明确接受网页 WebRTC 通话和数据通道不可用，Agent 可在桌面 Firefox 的实际配置档中执行：
+
+1. 记录 `media.peerconnection.enabled` 的原值、是否为自定义值，以及控制来源。
+2. 在 `about:config` 查找已有的 `media.peerconnection.enabled`，将其设为 `false`。若该版本没有此项，不通过新建同名偏好伪造支持。
+3. 重新打开测试页面，回读偏好，并检查正常网页环境中的 `RTCPeerConnection` 是否已不可用。只看到 IPPure 空白或零候选不算完成。
+4. 单列“WebRTC 已停用”，记录通话 / 数据通道限制；继续完成同配置档的 IP、DNS 检测，并记录 WebRTC 检测页实际状态。恢复时还原原值；此前没有自定义值则重置偏好，再重新打开页面复查。
+
+Mozilla 的[配置编辑器说明](https://support.mozilla.org/en-US/kb/about-config-editor-firefox)提供偏好修改及恢复方法；[Firefox 源码](https://searchfox.org/firefox-main/source/dom/webidl/RTCPeerConnection.webidl)用该偏好控制 `RTCPeerConnection` 接口。该做法针对连接接口，不表示摄像头、麦克风采集权限也被关闭；Mozilla 的 [privacy.network 文档](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network)明确区分二者。
+
+需要保留 WebRTC 时，先核对浏览器是否实际使用代理。Firefox 的 `disable_non_proxied_udp` 在无浏览器代理时仍可能直连；有严格代理要求时可核对该版本是否支持 `proxy_only`，其官方定义只允许经代理、基于 TCP 的 TURN 连接。它需要可用代理和应用端 TURN 支持，不能承诺所有通话可用，也不要求使用者另建 TURN 服务。由 Agent 选择有依据且在授权内的设置入口，回读并验证实际连接。[Mozilla 行为说明](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/70#api_changes)
+
+<a id="safari-webrtc"></a>
+
+#### Safari：网络层防护与可选停用
+
+已获准时，由 Agent 接入 [webrtc-guard 常见探测防护](WEBRTC-GUARD.md)，优先拒绝命中的已接管连接。该资源不依赖 Safari 扩展，但仍须逐项核对下面的接管、命中和功能影响；自定义端点与绕过核心的流量不因此得到保障。
+
+Safari 不能直接照搬 Chrome 扩展的策略接口：Mozilla 的[兼容性数据](https://github.com/mdn/browser-compat-data/blob/main/webextensions/api/privacy.json)将 Safari 的 `privacy.network.webRTCIPHandlingPolicy` 标为不支持。现有资料不能证明有一款 Safari 扩展能等效完成本项目的防护目标；商店名称相似、页面脚本拦截或隐藏 host 地址都不能代替运行证据。
+
+**保留 WebRTC：优先检查现用客户端的实际网络接管。** 这是供 Agent 按版本实施的处理顺序，尚不构成具体设备通过的证据：
+
+1. 在同一 Safari 配置档触发获准的 STUN / TURN 请求，对照客户端连接记录或获准的抓包，分别记录 IPv4、IPv6 的入站、规则命中和实际出站。HTTP 出口正常不能替代此检查。
+2. 客户端没有观察到请求时，先排除测试未发出或日志不完整，再检查 TUN、双栈路由与排除项。只开启系统 HTTP 代理或看到 TUN 开关开启都不足以交付。Mihomo 的 `strict-route` 文档分别说明 Linux / Windows 行为，不能直接把这些保障当作 macOS 已完成的验证。[Mihomo TUN 文档](https://wiki.metacubex.one/config/inbound/tun/)
+3. 请求进入客户端但命中 DIRECT 时，核对是否是约定的国内直连规则。如果用户目标是不向任何公网 STUN 端点暴露直连出口，就须在相应授权内让这些连接走受控代理或阻断；保留原直连结果不能报告该目标已达成。不能只加检测站的域名或几个常见端口就声称覆盖全部 WebRTC。
+4. 核对当前节点与代理组的 UDP 支持及失败行为。Mihomo 官方说明，UDP 请求遇到不支持 UDP 的代理可能继续向下匹配；要检查后续 DIRECT 或兜底，确保目标流量不会因此回落直连。可用性不满足时，在用户接受的范围内采用阻断并说明通话影响，不能静默切换节点或放宽路径目标。[Mihomo 匹配顺序与 UDP 行为](https://wiki.metacubex.one/config/rules/)
+5. 在持久配置入口应用最小改动后，回读配置并复测 IP、DNS、WebRTC 和需要的通话功能。IPv6 仍绕过时单列失败；零候选须区分策略阻断与测试故障，不能仅凭空白页通过。节点刷新或重载后的结果另行记录。
+
+**完全停用的可选路径：Apple 锁定模式。** [WebKit 源码](https://github.com/WebKit/WebKit/blob/c8dd7991380207583aabb9cf2c86d48bdde54d3f/Source/WTF/Scripts/Preferences/UnifiedWebPreferences.yaml#L4862)将 `PeerConnectionEnabled` 标记为 `disableInLockdownMode: true`。这是停用 PeerConnection 的源码依据，不能扩大为所有 Safari 版本已经实测。
+
+锁定模式会影响设备上的多项功能并要求重启，只有用户明确接受该影响时才实施。在 macOS 的系统设置 → 隐私与安全 → 锁定模式中操作；iPhone / iPad 使用系统设置中的对应入口。启用后还要检查 Safari 的站点例外，在新页面回读 `RTCPeerConnection` 的可用性；被排除的站点不受同样的 WebKit 限制。结果单列“WebRTC 已停用”，IP、DNS 继续验收，恢复时关闭锁定模式并按系统提示重启、复查。[Apple 官方说明](https://support.apple.com/en-us/105120)
+
+Apple 的 `WKWebpagePreferences.isLockdownModeEnabled` 是应用开发接口，不能当作能直接控制现有 Safari 的设置命令；未核实生效的 `defaults write` 键也不纳入自动接入方案。[Apple API 说明](https://developer.apple.com/documentation/webkit/wkwebpagepreferences/islockdownmodeenabled)
+
+#### 社区教程的使用边界
+
+[K3V1991 的浏览器 WebRTC 教程](https://github.com/K3V1991/How-to-disable-WebRTC-in-Chrome-Firefox-Safari-Opera-and-Edge)可用于发现候选方法；配置前仍须核对实际版本和官方依据。不能直接采纳其中以下判断：
+
+- Safari 的 `Remove Legacy WebRTC API` 涉及旧 API，不会因此停用现代 `RTCPeerConnection`。[WebKit 对旧 API 与现代 API 的说明](https://webkit.org/blog/7763/a-closer-look-into-webrtc/)
+- Safari 的 `Disable ICE Candidate Restrictions` 会放开 host 候选过滤，不能作为增强防护的开关。[WebKit 开关说明](https://webkit.org/web-inspector/device-settings/)
+- Chrome 的 STUN Origin Header、WebRTC 硬件编码和解码开关控制报文头或硬件加速，不能用来宣称已禁用 WebRTC。[Chromium 开关定义](https://chromium.googlesource.com/chromium/src/+/fb96126ce933cba0dd4fbe6cde9fd519b6a61ec3/content/public/common/content_switches.cc)
+- 旧 Edge 的隐藏本地 IP 选项，以及任何仅隐藏局域网 host 地址的设置，都不能单独证明公网 IPv4 / IPv6 已遵循约定路径。
+
+Safari 的具体处理见[网络层防护与可选停用](#safari-webrtc)。不默认更换 VPN、开启浏览器内置 VPN 或屏蔽全设备 UDP。未得到目标设备证据时记未验证。
+
+#### 取证与复测
+
 - 候选收集：用用户认可的 STUN / TURN 端点，例如官方 [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/) 页面；同时在同一配置档确认普通 HTTPS 的出口，供判断 srflx 归属。
 - 测试端点去向：按后缀逐级查它在本次规则中命中的名单，先过用户规则。公共 STUN 主机名的名单归属随规则发布变化，以本次查到的为准。
-- 支持 Chrome 应用商店扩展的浏览器，由 Agent 在目标配置档安装或启用 WebRTC Network Limiter，并选择对应 `disable_non_proxied_udp` 的设置。0.2.1.4 显示为「Use my proxy server (if present)」。核对实际版本、策略值与流量表现。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia) · [Chrome 安装教程](https://support.google.com/chrome_webstore/answer/2664769?hl=zh-Hans) · [Edge 安装教程](https://support.microsoft.com/zh-cn/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) · [Chrome 扩展接口](https://developer.chrome.com/docs/extensions/reference/api/privacy)
-- 无法安装时，核对浏览器内置设置或官方策略的实际作用范围，使用覆盖目标且在授权内的方式。候选包括 Chrome 的 `WebRtcIPHandling`、Edge 的 `WebRtcLocalhostIpHandling` 和 Brave 的 WebRTC IP Handling Policy。设置值以该版本官方文档和实际生效结果为准。[Chrome 策略](https://chromeenterprise.google/policies/#WebRtcIPHandling) · [Edge 策略](https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/webrtclocalhostiphandling) · [Brave 隐私设置](https://support.brave.app/hc/en-us/articles/360017989132-How-do-I-change-my-Privacy-Settings)
-- Firefox 按实际版本核对支持的扩展和 WebRTC 策略，由 Agent 配置并复测。其 `disable_non_proxied_udp` 在没有浏览器代理时允许直连，须结合现场代理设置和候选结果判断。[Firefox 安装附加组件](https://support.mozilla.org/zh-CN/kb/find-and-install-add-ons-add-features-to-firefox) · [Firefox WebExtensions 策略](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network) · [Firefox 策略行为说明](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/70#api_changes)
-- Safari 按平台核对有无支持相同防护目标的设置或扩展，核实可用后在获准配置档实施。仅有扩展安装入口时，仍需找到可验证的防护设置。[Mac Safari 扩展教程](https://support.apple.com/zh-cn/102343) · [iPhone Safari 扩展教程](https://support.apple.com/zh-cn/guide/iphone/-iphab0432bf6/ios)
 - 处理后结果不符时，检查扩展冲突、配置档权限和受管策略。
 - 零候选对照：获准后，在同一设备开一个无扩展的临时浏览器配置档，现用代理和 TUN 都不动，确认 STUN 可达，再和原配置档比较。

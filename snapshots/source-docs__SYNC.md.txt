@@ -11,7 +11,7 @@ python scripts/sync_rules.py rollback --output /your/rules-cache
 
 Windows 使用自己的目录路径。format 可选 mihomo、surge、sing-box、all；Surge 和 Shadowrocket 共用 surge。输出目录必须显式传入。退出码 0 表示成功；1 表示同步/校验失败；命令参数错误返回 2。成功及业务错误输出 JSON；参数用法输出到 stderr。
 
-sync 解析 release 完整 SHA 后，按该提交下载 manifest、index 和选定格式的五类规则（sing-box 另含 DNS 判断用的 non-cn-ip.json），验证相对路径、每文件 16 MiB 上限、SHA-256 和同代时间。失败保留当前指针。48 小时只约束本项目发布时间，不约束上游提交年龄。首次同步无可用缓存时明确失败，不生成假成功结果。
+sync 解析 release 完整 SHA 后，按该提交下载 manifest、index 和选定格式的五类规则，以及清单中已发布的 webrtc-guard 资源（sing-box 另含 DNS 判断用的 non-cn-ip.json），验证相对路径、每文件 16 MiB 上限、SHA-256 和同代时间。失败保留当前指针。48 小时只约束本项目发布时间，不约束上游提交年龄。首次同步无可用缓存时明确失败，不生成假成功结果。
 
 默认通过 GitHub 匿名 REST API 查询 release SHA，共享出口耗尽额度时会失败。有缓存则保留，首次同步则停止。执行 Agent 可通过公开 Git 引用或其他可靠方式核实本仓库的完整 release SHA，再显式传入；工具无需 Git 或访问令牌：
 
@@ -20,6 +20,8 @@ python scripts/sync_rules.py sync --output /your/rules-cache --format mihomo --r
 ```
 
 `--release-sha` 仅用于 sync，跳过的是 API 查版本这一步，同代时间、时效、路径、大小、哈希和回退 held 保护仍照常校验。它不证明该 SHA 仍是当前 release 分支头；调用方应记录选择依据。该参数不能用于强制接收过期发布或覆盖用户回退决定。
+
+`missing_optional_resources` 列出旧工具缓存遗漏的已发布辅助或防护资源。旧缓存仍可校验，不能据此判定防护已安装；同代 `sync` 返回 `unchanged` 时也须检查此字段。需要立即补齐时，保留旧缓存，换一个新输出目录完整同步并核对后再应用；下一发布代也会完整下载。新工具写入的缓存若缺少这些资源会校验失败。回退到尚未包含防护资源的旧代时，Agent 须同步处理客户端引用并报告防护状态，不能只回退文件。
 
 成功后 current.json 指向 generations 内独立版本目录，返回值包含 generation、directory、files、age_seconds、stale。current.json 不是任何客户端的配置格式。要把规则发给其他设备时，从它找到当前版本目录，复制到你自己的发布路径；版本目录名每代都会变。Agent 必须把实际验证、客户端加载和更新动作分别报告；本工具下载成功不表示客户端已更新。
 

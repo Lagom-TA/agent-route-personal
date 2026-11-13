@@ -23,6 +23,12 @@ DIGEST = re.compile(r'^[a-f0-9]{64}$')
 HELPER = 'sing-box/non-cn-ip.json'
 
 
+def optional_resources(fmt, files):
+    formats = FORMATS if fmt == 'all' else {fmt: FORMATS[fmt]}
+    guards = [f'{f}/webrtc-guard{ext}' for f, ext in formats.items()]
+    return [name for name in guards + ([HELPER] if fmt in ('all', 'sing-box') else []) if name in files]
+
+
 def get(url):
     with urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'AgentRoute-sync/1'}), timeout=30) as r:
         if not r.url.startswith(('https://raw.githubusercontent.com/', 'https://api.github.com/')):
@@ -109,11 +115,16 @@ def verify(root, generation):
     # Caches written before the helper file existed hold only the rule files; both stay valid.
     if not isinstance(expected, list) or not set(selected(generation.split('-', 1)[1])) <= set(expected) or not set(expected) <= set(m['files']):
         raise ValueError('cache_inventory_invalid')
+    optional = optional_resources(generation.split('-', 1)[1], m['files'])
+    if meta.get('schema_version') == 2 and not set(optional) <= set(expected):
+        raise ValueError('cache_inventory_invalid')
     for name in expected:
         p = path / name
         if p.parent.is_symlink() or p.is_symlink() or not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest() != m['files'][name]:
             raise ValueError('cached_file_corrupt')
-    return {'generation': generation, 'directory': str(path.resolve()), 'age_seconds': round(age), 'stale': age > 172800, 'files': expected}
+    return {'generation': generation, 'directory': str(path.resolve()), 'age_seconds': round(age),
+            'stale': age > 172800, 'files': expected,
+            'missing_optional_resources': sorted(set(optional) - set(expected))}
 
 
 def selected(fmt):
@@ -163,7 +174,7 @@ def operate(command, root, fmt='all', fetch=get, release_sha=None):
         stage.mkdir()
         try:
             (stage / 'manifest.json').write_bytes(raw)
-            names = selected(fmt) + ([HELPER] if fmt in ('all', 'sing-box') and HELPER in m['files'] else [])
+            names = selected(fmt) + optional_resources(fmt, m['files'])
             for name in names:
                 data = fetch(BASE + sha + '/' + name)
                 if not data or len(data) > LIMIT or hashlib.sha256(data).hexdigest() != m['files'][name]:
@@ -172,7 +183,7 @@ def operate(command, root, fmt='all', fetch=get, release_sha=None):
             index = json.loads((stage / 'index.json').read_bytes())
             if not isinstance(index, dict) or index.get('schema_version') != 1 or index.get('generated_at_utc') != m['generated_at_utc']:
                 raise ValueError('index_generation_mismatch')
-            (stage / 'cache.json').write_text(json.dumps({'files': names}), encoding='utf-8')
+            (stage / 'cache.json').write_text(json.dumps({'schema_version': 2, 'files': names}), encoding='utf-8')
             if dest.exists(): verify(root, generation)
             else: os.replace(stage, dest)
             result = verify(root, generation)

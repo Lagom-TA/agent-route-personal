@@ -8,6 +8,15 @@ AgentRoute 维护上游规则、原生格式、索引、校验和自动发布。
 
 使用者可在同一条请求中授权规则替换、扩展安装与配置、节点订阅刷新和浏览器检测。Agent 核对环境后直接执行已有授权的操作。需要额外权限或平台要求本人确认时，准备好对应步骤并说明所需操作，先继续处理其他获准项目。取得权限或确认后，继续完成该项配置和检测。
 
+首页的简短提示词声明接入目标与授权；先读取下方公开索引，再按本文及引用文档执行具体部署、浏览器防护和验收。读取失败时说明缺失内容，不能跳过对应要求。
+
+## 执行清单
+
+1. **读取与识别**：读取[公开规则索引](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/index.json)，核对现用客户端、内核版本和生效配置。
+2. **备份与覆盖**：按[接入方案](#选择接入方案)备份，替换旧业务规则与默认兜底，保留节点订阅、可用代理策略组及必要技术规则；按已有授权接入独立 WebRTC 防护、重载并刷新一次节点订阅。
+3. **浏览器配置**：按[浏览器检测与更新](#浏览器检测与更新)检查本机所有浏览器，在实际使用的配置档自动安装、配置并回读防护；需要本人确认或存在能力限制的项目单列状态。
+4. **实测与交付**：执行实际分流及同配置档 IP、DNS、WebRTC 检测，刷新后复查，按[交付与恢复](#交付与恢复)报告结果、备份位置、恢复方法和未验证项。
+
 ## 规则资源
 
 [公开索引](https://raw.githubusercontent.com/ryuu-restart/agent-route/release/index.json)列出规则地址、动作和建议刷新间隔。[首页](README.md#rule-subscriptions)提供四个给 Agent 的格式入口和对应的原生规则集地址。[客户端参考](docs/CLIENTS.md#资源与规则语义)说明文件格式和规则语义。
@@ -21,9 +30,11 @@ AgentRoute 维护上游规则、原生格式、索引、校验和自动发布。
 
 ## 选择接入方案
 
-使用者的 Agent 核对实际客户端与核心版本，查阅该版本的说明，按用户授权选择规则格式、配置入口和刷新方式。改动前备份，保留节点订阅和联网所需的技术路径。遇到能力或权限限制时说明实际影响。
+使用者的 Agent 核对实际客户端与核心版本，查阅该版本的说明，按用户授权选择规则格式、配置入口和刷新方式。改动前备份，保留节点订阅、可用代理策略组和联网所需的技术路径。遇到能力或权限限制时说明实际影响。
 
 默认由 AgentRoute 替换实际生效的业务分流和兜底。通过订阅刷新后仍生效的配置入口，停用订阅、覆写、模块等来源中的旧业务规则、规则集引用和旧兜底，保留节点订阅用于更新节点。客户端只能追加规则时，先说明覆盖未完成的原因，等使用者选择后续方案。具体范围见[替换业务分流](docs/CLIENTS.md#replace-business-rules)。
+
+获准接入 WebRTC 常见探测防护时，从索引 `protections[]` 安装 `webrtc-guard`，按[防护接入说明](docs/WEBRTC-GUARD.md)使用明确拒绝动作，放在必要技术规则之后、普通公网 DNS 地址例外和业务规则之前。首页提示词已说明并授权相应通话、会议和 P2P 影响，无需重复询问。资源尚未发布、客户端不支持或不能确认接管时，报告具体缺口。保留 Chrome / Edge 的指定扩展方案。
 
 核对实际生效的 DNS 设置。对接入范围内与 [DNS 目标](docs/DNS-WEBRTC.md#dns-goals)冲突的旧业务解析策略和回退路径，取得授权后移除或替换。保留必要的节点引导解析和内网解析。
 
@@ -35,6 +46,10 @@ AgentRoute 维护上游规则、原生格式、索引、校验和自动发布。
 
 接入后回读运行配置，确认旧业务规则、旧规则集引用和旧兜底已经停用，用真实连接核对首条命中和出站。获准刷新节点订阅后再回读并抽查，确认这些旧规则和兜底没有恢复。仍有旧规则生效时，报告覆盖未完成。刷新未验证时单列持久化状态。详见[配置持久化](docs/CLIENTS.md#where-changes-survive)。
 
+核对未匹配流量的默认代理出站，以及 `claude.ai`、`claude.com`、`anthropic.com` 和 `api.anthropic.com` 的实际命中与出站；不能仅凭规则文件包含域名就认定通过。
+
+新增防护须核对资源加载、优先级和实际拒绝证据，IPv4、IPv6 分开报告。获准刷新节点订阅后，再检查防护引用及拒绝动作没有丢失。探针无候选地址不能单独证明防护通过；未进入客户端的流量无法由规则阻断。
+
 告知用户已处理的范围、备份位置和可独立操作的恢复方法。改动引起故障时恢复备份。获准做完整设备接入时，按[接入范围](docs/CLIENTS.md#scope)及[高级验收](docs/DNS-WEBRTC.md#acceptance)执行。
 
 <a id="4-检测并处理-dns"></a>
@@ -45,7 +60,9 @@ AgentRoute 维护上游规则、原生格式、索引、校验和自动发布。
 
 WebRTC 防护是本次接入范围内每个浏览器的必做项。快速开始默认检查本机已安装的所有浏览器，识别版本、实际使用的配置档、扩展启用状态和实际生效的策略。Agent 在获准的配置档内记录原设置，再完成安装、配置和复查。
 
-支持 WebRTC Network Limiter 的浏览器，Agent 从官方商店补装缺失的扩展，启用并设为禁用非代理 UDP（`disable_non_proxied_udp`）。0.2.1.4 的选项名为「Use my proxy server (if present)」。已有扩展也要核对并修正启用状态和设置。无法安装时，按实际版本应用官方支持的等效防护。无可核实的做法或操作受限时标为待配置并写明原因。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia) · [各浏览器官方资料](docs/DNS-WEBRTC.md#webrtc-methods)
+支持 WebRTC Network Limiter 的浏览器，Agent 从官方商店补装缺失的扩展，启用并设为禁用非代理 UDP（`disable_non_proxied_udp`）。0.2.1.4 的选项名为「Use my proxy server (if present)」。已有扩展也要核对并修正启用状态和设置。Chrome 和 Edge 固定采用此扩展方案；受限时说明待配置原因，继续处理其余浏览器。其他浏览器无法安装时，先查[各浏览器方案与官方依据](docs/DNS-WEBRTC.md#webrtc-methods)，按实际版本继续核对内置设置、策略及等效防护。无可核实的做法或操作受限时标为待配置并写明查过的入口和原因。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia)
+
+限制非代理 UDP 与完全停用 WebRTC 分开处理。需要完全停用时，先核对已有授权是否包含网页通话和数据通道不可用的影响；已明确接受时直接实施并回读。Firefox 有原生停用入口。Safari 优先按[网络层处理与锁定模式说明](docs/DNS-WEBRTC.md#safari-webrtc)核对：在已获准范围内处理实际 UDP、IPv6 路径，锁定模式只作为用户明确接受系统级限制后的选项。使用社区教程时核对当前平台、版本和官方依据，不能把旧版菜单照搬到新浏览器。
 
 配置后，Agent 在同一实际使用的配置档回读生效设置，逐项执行 IP、DNS 和 WebRTC 检测，核对适用的音视频功能。交付时逐个列出发现的浏览器及配置档、实际结果、恢复方法和检测入口。无法核实的检测项标为未验证。[IP 检测](https://ippure.com/) · [DNS 检测](https://ippure.com/DNS-Leak-Detect.html) · [WebRTC 检测](https://ippure.com/Browser-WebRTC-Leak-Detect.html)
 

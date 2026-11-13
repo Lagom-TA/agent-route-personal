@@ -76,6 +76,14 @@ dns:
     +.local: [system]
     +.home.arpa: [system]
 rule-providers:
+  sr-webrtc-guard:
+    type: http
+    behavior: classical
+    format: yaml
+    url: https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/webrtc-guard.yaml
+    path: ./rules/sr-webrtc-guard.yaml
+    interval: 86400
+    proxy: PROXY
   sr-private:
     type: http
     behavior: domain
@@ -144,6 +152,9 @@ rules:
   - IP-CIDR6,fc00::/7,DIRECT,no-resolve
   - IP-CIDR6,fe80::/10,DIRECT,no-resolve
   - IP-CIDR6,ff00::/8,DIRECT,no-resolve
+  # Common STUN probes only; preserve narrow node/LAN exceptions above.
+  # This must precede business DIRECT rules and public resolver IP exceptions.
+  - RULE-SET,sr-webrtc-guard,REJECT
   # Every resolver must follow its own policy, including the backups.
   - IP-CIDR,223.5.5.5/32,DIRECT,no-resolve
   - IP-CIDR,223.6.6.6/32,DIRECT,no-resolve

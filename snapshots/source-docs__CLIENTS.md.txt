@@ -52,9 +52,11 @@ TUN 和系统代理可以同时开。这时网页可能走系统代理、WebRTC 
 | 小火箭（Shadowrocket）/ Surge | `surge/<规则>.list`，无策略列的 RULE-SET 文本 | [Surge 规则集](https://manual.nssurge.com/rules/ruleset.html)；Shadowrocket 目前没查到公开的官方配置手册，核对 App 内说明、[社区手册](https://github.com/LOWERTOP/Shadowrocket)（非官方）和实际能力，不直接照搬 Surge 字段 |
 | sing-box 及其图形客户端 | `sing-box/<规则>.json`，source rule-set version 3 | [规则集](https://sing-box.sagernet.org/configuration/rule-set/)、[迁移说明](https://sing-box.sagernet.org/migration/) |
 
-`<规则>` 为 private、reject、proxy、direct、cn-ip；地址前缀为 `https://raw.githubusercontent.com/ryuu-restart/agent-route/release/`。格式版本是实际兼容要求，不是文档装饰。旧格式公开地址继续保留，但新接入优先选择索引中的标准资源。来源是镜像或自建转换时，内容等效且刷新正常就保留，报告注明未核对发布代。
+`<规则>` 为 private、reject、proxy、direct、cn-ip，独立防护资源为 webrtc-guard；地址前缀为 `https://raw.githubusercontent.com/ryuu-restart/agent-route/release/`。格式版本是实际兼容要求，不是文档装饰。旧格式公开地址继续保留，但新接入优先选择索引中的标准资源。来源是镜像或自建转换时，内容等效且刷新正常就保留，报告注明未核对发布代。
 
-索引给出项目规则的动作和建议顺序 **private → reject → proxy → direct → cn-ip**。内网与国内规则的动作是直连，广告规则的动作是拦截，海外规则的动作是代理。未命中规则的流量走已确认的默认代理策略。
+`webrtc-guard` 使用独立的端口及域名关键字条件，Mihomo 必须使用 `classical`。按[防护说明](WEBRTC-GUARD.md)置于必要技术规则之后、普通公网 DNS 地址例外及业务规则之前，明确拒绝匹配连接；不要用于 DNS 规则集。首次接入后才会随远程资源更新。
+
+索引给出项目业务规则的动作和建议顺序 **private → reject → proxy → direct → cn-ip**。内网与国内规则的动作是直连，广告规则的动作是拦截，海外规则的动作是代理。未命中规则的流量走已确认的默认代理策略。
 
 接入时保留节点连接、引导解析、LAN、DNS 和核心自有地址所需的技术路径。核对真实 FakeIP 池与 TUN 前缀，避免当作真实 LAN 或中国 IP 匹配。
 
@@ -64,11 +66,11 @@ TUN 和系统代理可以同时开。这时网页可能走系统代理、WebRTC 
 
 ## 订阅格式
 
-给 Agent 的入口包含规则索引和对应的格式。原生规则地址在索引的 `datasets[].resources` 中，建议刷新间隔为 24 小时。`routing_mode: replace` 和 `final_action: PROXY` 分别表示替换业务分流和默认走代理。具体覆写方式按实际客户端确定。
+给 Agent 的入口包含规则索引和对应的格式。业务规则地址在索引的 `datasets[].resources` 中；入口的 `protections: ["webrtc-guard"]` 指向索引 `protections[].resources` 中的独立防护，建议刷新间隔为 24 小时。`routing_mode: replace` 和 `final_action: PROXY` 分别表示替换业务分流和默认走代理。具体覆写方式按实际客户端确定。
 
 ### Mihomo
 
-索引的 `mihomo` 资源是原生 YAML 规则集，`mihomo_behavior` 标明域名或 IP 类型。Clash Verge Rev 和 FlClash 等客户端以实际运行的内核为准。[Mihomo 规则集](https://wiki.metacubex.one/config/rule-providers/) · [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) · [FlClash](https://github.com/chen08209/FlClash)
+索引的 `mihomo` 资源是原生 YAML 规则集，`mihomo_behavior` 标明 `domain`、`ipcidr` 或防护所需的 `classical` 类型。Clash Verge Rev 和 FlClash 等客户端以实际运行的内核为准。[Mihomo 规则集](https://wiki.metacubex.one/config/rule-providers/) · [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) · [FlClash](https://github.com/chen08209/FlClash)
 
 ### Surge
 
