@@ -9,7 +9,7 @@
 | 查询类别 | 目标 |
 | --- | --- |
 | 本机、LAN、private | 使用经核实的本地 / 内网解析路径，不把内网名发送给公网解析器；适用时保留 mDNS |
-| 明确保留的用户例外 | 保持用户认可的独立策略，包括解析路径。保留的域名类例外按同一域名条件取得 DNS 策略 |
+| 另行确认保留的用户例外 | 保持用户认可的独立策略，包括解析路径。保留的域名类例外按同一域名条件取得 DNS 策略 |
 | 国内域名 | 直连使用可信加密解析器，后续连接遵循直连策略 |
 | 海外与未知公网域名 | 使用经代理的可信加密解析器；未知域名的中国 IP 兜底按实际解析流程实现 |
 | 节点服务器域名 | 使用用户认可、在代理建立前即可工作的引导解析，避免循环依赖 |
@@ -57,8 +57,8 @@
 - 在实际使用的浏览器配置档中取证，现用代理保持开启。测试端点使用用户认可的 STUN / TURN；不使用未知 TURN 凭据，报告不公开完整网络地址。
 - 测试端点的去向按本次实际规则核对：先过用户规则，再按后缀逐级查它命中哪个名单，不沿用文档或以往报告中的名单归属。走代理的端点才能说明代理路径是否被绕过；国内端点按 direct 走，看到本机出口是分流结果，不算泄露。
 - relay 是中继地址，代理也可能有多个出口，不要求所有候选与 HTTP 出口字面相等；mDNS host 名称不证明公网路径已受保护。
-- 接入时按[浏览器检测与更新](../AGENTS.md#浏览器检测与更新)向使用者提供每个目标浏览器的官方配置教程，由使用者操作并用同一配置档自测。复查按各配置档实际生效的策略及路径取证。
-- 安装、重启或可能暴露额外出口的对照应在相应授权内执行，并先说明影响。遵守受管策略，限制 WebRTC 网络路径时保留用户需要的功能。处理后核对持久化和实际需要的通话功能。
+- 接入时按[浏览器检测与更新](../AGENTS.md#浏览器检测与更新)在每个获准的实际配置档中安装、配置或核对防护，再由 Agent 在同一配置档检测。复查按各配置档实际生效的策略及路径取证。
+- 安装、重启或可能暴露额外出口的对照应在相应授权内执行。遵守受管策略，记录改动前的扩展和设置，处理后核对持久化及用户需要的通话功能。需要本人确认或额外权限时标明对应步骤，继续完成可独立执行的项目。
 
 候选收集工具、浏览器官方教程和排查方向见[参考方法](#webrtc-methods)。
 
@@ -67,7 +67,7 @@
 | 证实存在未经认可的本地公网 IPv4 / IPv6 直连暴露 | 记为失败。修复后重测，无法修复时记录缺口并核实相关改动的恢复结果 |
 | 候选符合[逐项验收](#acceptance)的 WebRTC 条件，测试端点工作正常 | 该轮路径检查通过；不扩大到未测设备、网络或通话能力 |
 | 没有公网候选、零候选或页面空白 | 不单独判通过。获准后可做隔离对照，现用代理和 TUN 都不动，做法见[参考方法](#webrtc-methods)。证据仍不足则未验证 |
-| 没有浏览器 / 无法操作目标浏览器 | 前者按实际场景记不适用；后者指导用户并标明回传证据或未验证 |
+| 没有浏览器 / 无法操作目标浏览器 | 没有浏览器时记不适用。无法操作时说明限制，未取得实际证据的检测项记未验证 |
 
 DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若影响通话，说明影响并让用户选择恢复相关改动或继续研究支持的路径，不能静默放宽防护目标。
 
@@ -101,6 +101,7 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 **规则加载与分流**
 
 - 通过：五类资源都已加载且条目数不为零；每类至少一个取自本次发布数据的样本，在运行记录中首条命中对应规则并走预期出站；至少一个不在任何名单中的样本走默认代理。
+- 覆盖验收：回读最终运行配置，确认[替换范围](CLIENTS.md#replace-business-rules)内的旧业务规则、旧规则集引用和旧兜底已停用。任一项仍生效时记覆盖未完成。
 - 中国 IP 兜底：不在任何域名名单中的域名，按纯中国、纯境外、混合三种答案分别记录首条命中与出站。只有整组答案都在 cn-ip 内才可直连；纯境外与混合答案走默认代理。实现让域名不进入 IP 兜底时写明这一点，三种答案都应走默认代理。混合答案直连记失败；取不到混合答案的运行样本时，这一子项记未验证，源码或隔离实例的结果只作佐证。
 - 需要：加载 + 运行。
 - 不能单独证明：配置里写了规则、界面显示已加载、规则测试器的结果、另一台设备的命中；只用单一地址的答案判断中国 IP 兜底。
@@ -129,6 +130,7 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 **DNS**
 
 - 通过：[DNS 目标](#dns-goals)中每个适用类别至少一个样本，实际解析器及其出站与目标一致，覆盖首次解析、连接建立时的再次解析，以及出站绑定或全局默认的解析器；未知域名经中国 IP 兜底直连时，DNS 仍走代理路径；节点服务器域名的解析不经该节点所在的代理。浏览器独立安全 DNS 若开启，同样核对。本机、LAN、private 类按[内网解析判断](#private-dns-preflight)判定。
+- 覆盖验收：回读运行配置中订阅、客户端覆写和模块留下的业务 DNS 策略与回退。海外或未知公网域名仍使用已证实不符合目标的旧路径时，DNS 记失败。
 - 需要：运行——同一次查询能关联到实际解析器连接、命中策略和出站链的日志，或可信抓包。
 - 不能单独证明：配置里的解析器名称或地址、DoH 已加密、TXT / ECS 探针、命令行查询、未见明文 53 端口流量、NXDOMAIN。
 - 未验证：没有日志的国内类；无法在不制造故障的情况下观察的备用和回退路径，只记配置证据。单地址与混合地址的证据分开记录。配置或客户端自带说明已表明某类别的备用路径偏离目标时，不能记未验证或通过：按[受限接入](CLIENTS.md#limited-integration)说明并由使用者选择，接受时最多部分完成。
@@ -152,6 +154,7 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 **持久化**
 
 - 通过：按[持久化准则](CLIENTS.md#where-changes-survive)识别配置管理者和持久来源，在获准的重新生成、刷新或重启后，必要规则、DNS、明确保留的例外及适用的浏览器设置仍在运行状态中生效。
+- 业务规则覆盖：节点订阅刷新或配置重新生成后，回读最终配置并确认旧业务规则、旧规则集引用和旧兜底没有恢复。旧规则恢复记失败。
 - 需要：加载（重新生成或重启后回读运行配置）+ 运行抽样。
 - 不能单独证明：文件写入成功、API 返回成功、临时加载成功。
 - 未验证：复查未获准或未完成。重新生成后改动丢失记失败。不适用须写明理由，例如本次没有任何改动。
@@ -169,13 +172,13 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 
 ```text
 环境与依据：时间、接入范围、目标设备/配置档、实际版本、文档提交 SHA 与必要官方依据
-实际改动：修改位置、字段/策略、节点与例外是否保留；无须修改的项目注明保持现状
+实际改动：修改位置、已覆盖的旧业务规则及兜底、节点来源、另行确认的例外
 结果：逐项验收中每一项的状态、证据类型、证据及来源（亲自观察 / 用户回传）
 规则身份：来源、格式、查询到的发布代、实际加载信息与刷新方式
-持久化依据：配置管理者与持久来源、已完成的重新生成/刷新/重启、运行状态回读；未做的复查和原因
+持久化依据：配置管理者与持久来源、已完成的重新生成/刷新/重启、旧规则是否恢复、未做的复查及原因
 恢复：配置前像、浏览器原选项、用户可独立执行的恢复方法及其文件路径
 最终状态与缺口：完整通过 / 部分完成 / 等待用户 / 失败已回退；具体下一步
-后续更新提醒用户开启客户端自动刷新，或定期手动刷新。
+规则更新：规则集刷新方式、自动刷新状态及验证结果
 项目反馈可选，附脱敏复现信息及 Issue 入口。
 ```
 
@@ -201,7 +204,7 @@ DNS 与 WebRTC 互不替代：一项通过不证明另一项通过。修复若�
 | 查询 `whoami.ds.akahelp.net` 的 TXT 记录（`dig`、`nslookup`、`Resolve-DnsName`） | 探针返回的解析器信息，以及查询携带的 ECS 子网前缀（若有） | 通常属于未知类域名，按本次规则核对；只提供这次探针的线索；ECS 与代理出口或本地运营商网段一致、不一致或缺失，都不能单独证明查询经过代理或绕行 |
 | 查询 `o-o.myaddr.l.google.com` 的 TXT 记录 | 递归解析器的地址 | 通常属于海外类域名，按本次规则核对；看不出查询是否经过代理 |
 | `https://www.cloudflare.com/cdn-cgi/trace` | HTTP 出口的 IP 和地区 | 只说明连接出口，与 DNS 路径无关 |
-| ipleak.net 等浏览器检测页 | 浏览器这条路径上的出口和解析器 | 单次结果，不能单独判断解析器是否经过代理 |
+| IPPure 的 [IP 检测](https://ippure.com/)与 [DNS 检测](https://ippure.com/DNS-Leak-Detect.html) | 浏览器这条路径上的出口和解析器 | 单次结果，不能单独判断解析器是否经过代理 |
 
 ECS 可由客户端或中间解析器生成、转发或修改，并非连接源地址的证明（[RFC 7871 §7.1](https://www.rfc-editor.org/rfc/rfc7871.html#section-7.1)）；例如 Mihomo 的 [ecs / ecs-override](https://wiki.metacubex.one/config/dns/#ecs) 可指定或覆盖前缀，上游是否接受、转发还取决于其策略。`ns`、`ip` 等返回字段也不替代路径证据，不以 ECS 优先裁决；路径证据的要求见逐项验收的 DNS 项。
 
@@ -213,8 +216,9 @@ ECS 可由客户端或中间解析器生成、转发或修改，并非连接源�
 
 - 候选收集：用用户认可的 STUN / TURN 端点，例如官方 [Trickle ICE](https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/) 页面；同时在同一配置档确认普通 HTTPS 的出口，供判断 srflx 归属。
 - 测试端点去向：按后缀逐级查它在本次规则中命中的名单，先过用户规则。公共 STUN 主机名的名单归属随规则发布变化，以本次查到的为准。
-- 支持 Chrome 应用商店扩展的浏览器可安装 WebRTC Network Limiter。使用者打开扩展选项，选择对应 `disable_non_proxied_udp` 的设置。0.2.1.4 显示为「Use my proxy server (if present)」。核对实际版本、策略值与流量表现。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia) · [Chrome 安装教程](https://support.google.com/chrome_webstore/answer/2664769?hl=zh-Hans) · [Edge 安装教程](https://support.microsoft.com/zh-cn/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) · [Chrome 策略](https://developer.chrome.com/docs/extensions/reference/api/privacy) · [可选证据](CLIENT-EVIDENCE.md#客户端案例)
-- Firefox 按实际版本核对支持的扩展和 WebRTC 策略。使用者按核实后的步骤配置并复测。[Firefox 安装附加组件](https://support.mozilla.org/zh-CN/kb/find-and-install-add-ons-add-features-to-firefox) · [Firefox WebExtensions 策略](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network)
-- Safari 按平台核对有无支持相同防护目标的设置或扩展。核实到可用方案后，把适用的教程交给使用者。[Mac Safari 扩展教程](https://support.apple.com/zh-cn/102343) · [iPhone Safari 扩展教程](https://support.apple.com/zh-cn/guide/iphone/-iphab0432bf6/ios)
+- 支持 Chrome 应用商店扩展的浏览器，由 Agent 在目标配置档安装或启用 WebRTC Network Limiter，并选择对应 `disable_non_proxied_udp` 的设置。0.2.1.4 显示为「Use my proxy server (if present)」。核对实际版本、策略值与流量表现。[官方扩展](https://chromewebstore.google.com/detail/webrtc-network-limiter/npeicpdbkakmehahjeeohfdhnlpdklia) · [Chrome 安装教程](https://support.google.com/chrome_webstore/answer/2664769?hl=zh-Hans) · [Edge 安装教程](https://support.microsoft.com/zh-cn/edge/add-turn-off-or-remove-extensions-in-microsoft-edge) · [Chrome 扩展接口](https://developer.chrome.com/docs/extensions/reference/api/privacy)
+- 无法安装时，核对浏览器内置设置或官方策略的实际作用范围，使用覆盖目标且在授权内的方式。候选包括 Chrome 的 `WebRtcIPHandling`、Edge 的 `WebRtcLocalhostIpHandling` 和 Brave 的 WebRTC IP Handling Policy。设置值以该版本官方文档和实际生效结果为准。[Chrome 策略](https://chromeenterprise.google/policies/#WebRtcIPHandling) · [Edge 策略](https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/webrtclocalhostiphandling) · [Brave 隐私设置](https://support.brave.app/hc/en-us/articles/360017989132-How-do-I-change-my-Privacy-Settings)
+- Firefox 按实际版本核对支持的扩展和 WebRTC 策略，由 Agent 配置并复测。其 `disable_non_proxied_udp` 在没有浏览器代理时允许直连，须结合现场代理设置和候选结果判断。[Firefox 安装附加组件](https://support.mozilla.org/zh-CN/kb/find-and-install-add-ons-add-features-to-firefox) · [Firefox WebExtensions 策略](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/privacy/network) · [Firefox 策略行为说明](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/70#api_changes)
+- Safari 按平台核对有无支持相同防护目标的设置或扩展，核实可用后在获准配置档实施。仅有扩展安装入口时，仍需找到可验证的防护设置。[Mac Safari 扩展教程](https://support.apple.com/zh-cn/102343) · [iPhone Safari 扩展教程](https://support.apple.com/zh-cn/guide/iphone/-iphab0432bf6/ios)
 - 处理后结果不符时，检查扩展冲突、配置档权限和受管策略。
 - 零候选对照：获准后，在同一设备开一个无扩展的临时浏览器配置档，现用代理和 TUN 都不动，确认 STUN 可达，再和原配置档比较。

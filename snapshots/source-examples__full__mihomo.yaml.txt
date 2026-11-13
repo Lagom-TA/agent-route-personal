@@ -1,5 +1,5 @@
 # AgentRoute full template for Mihomo / Clash Meta. This is NOT a subscription.
-# Merge the keys below into the existing profile; never replace the whole file.
+# Apply the relevant settings to the existing profile. Replace the old business rules, rule-set references and fallback.
 # Keep the user's proxies, proxy-providers, proxy-groups, ports, tun and secret.
 # Replace every PROXY (including the #PROXY suffix of DNS URLs) with the real main group.
 # When the profile comes from a subscription, read the persistence section of docs/CLIENTS.md first.
@@ -54,10 +54,10 @@ dns:
     - https://223.5.5.5/dns-query#DIRECT
     - https://223.6.6.6/dns-query#DIRECT
   # Keep domain-based DNS policy even when an IP rule routes the connection DIRECT.
-  # Explicitly clear a separately configured direct resolver when merging this example.
-  # That also moves the profile's own domain-based DIRECT rules (user exceptions such as
-  # DOMAIN-SUFFIX,cn) to nameserver: give each a nameserver-policy entry for the same
-  # domains with the resolver it used before, or report the change and let the user choose.
+  # Explicitly clear a separately configured direct resolver when applying this example.
+  # That also moves any separately approved domain-based DIRECT exceptions to nameserver.
+  # Give each a nameserver-policy entry for the same domains and its original resolver,
+  # or report the change and let the user choose.
   direct-nameserver: []
   nameserver:
     - https://1.1.1.1/dns-query#PROXY
@@ -117,7 +117,7 @@ rule-providers:
     interval: 86400
     proxy: PROXY
 rules:
-  # User exceptions stay above this block. Add node servers next:
+  # Place separately approved user exceptions and required node rules above this block:
   #   DOMAIN,node.example.com,DIRECT
   #   IP-CIDR,203.0.113.10/32,DIRECT,no-resolve
   # >>> AgentRoute managed begin
