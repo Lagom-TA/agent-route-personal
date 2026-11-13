@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scope": "public_routing_data_only",
-  "generated_at_utc": "2026-11-13T02:48:48.893654+00:00",
+  "generated_at_utc": "2026-11-13T08:19:23.562055+00:00",
   "base_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/",
   "manifest_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json",
   "agent_guide_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/AGENTS.md",
@@ -11,6 +11,7 @@
   "order": [
     "user-and-node-exceptions",
     "lan",
+    "webrtc-guard",
     "dns-server-paths",
     "private",
     "reject",
@@ -142,6 +143,58 @@
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/cn-ip.json",
           "sha256": "9c240863bec9317df7e5698cb9a4e872c6d3960218b3bc3919fe427f5b9f3910",
           "entries": 9640
+        }
+      }
+    }
+  ],
+  "protections": [
+    {
+      "id": "webrtc-guard",
+      "action": "REJECT",
+      "mihomo_behavior": "classical",
+      "scope": "common_stun_ports_and_domain_keywords",
+      "ports": [
+        3478,
+        5349,
+        19302,
+        19303,
+        19304,
+        19305,
+        19306,
+        19307,
+        19308,
+        19309
+      ],
+      "domain_keywords": [
+        "stun"
+      ],
+      "requires": [
+        "traffic_captured_by_client",
+        "before_business_rules"
+      ],
+      "limitations": [
+        "not_all_webrtc",
+        "may_affect_calls_and_p2p",
+        "ipv6_capture_requires_device_validation"
+      ],
+      "resources": {
+        "surge": {
+          "path": "surge/webrtc-guard.list",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/webrtc-guard.list",
+          "sha256": "3b2069129b19bd09584f0241e9fa9ad1b290ccb2eb3ce19fab26ff0a16f1f648",
+          "entries": 11
+        },
+        "mihomo": {
+          "path": "mihomo/webrtc-guard.yaml",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/webrtc-guard.yaml",
+          "sha256": "34ed50e915b356feb90368b5d5d2df88acda37b53d7ff99a26b68a4e6d3b103f",
+          "entries": 11
+        },
+        "sing-box": {
+          "path": "sing-box/webrtc-guard.json",
+          "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/webrtc-guard.json",
+          "sha256": "d016b8949a2bfabc60efb40184529f2c84834d8344cab662c1f1e441ada51217",
+          "entries": 11
         }
       }
     }

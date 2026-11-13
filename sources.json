@@ -210,6 +210,28 @@
       "declared_licenses": [],
       "license_status": "See upstream terms",
       "evidence": "https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml"
+    },
+    {
+      "id": "Niklaus88/Clash-Config",
+      "author": "Niklaus88",
+      "url": "https://github.com/Niklaus88/Clash-Config",
+      "role": "reference",
+      "declared_licenses": [
+        "MIT"
+      ],
+      "evidence": "https://github.com/Niklaus88/Clash-Config/blob/afcae376a52824864970a68c5aa0e24a38444563/clash-script.js#L185",
+      "source_commit": "afcae376a52824864970a68c5aa0e24a38444563",
+      "transformation": "Adapted common STUN destination ports and stun keyword only; generated locally in three formats. No DNS, proxy groups, app exceptions or executable override script imported. Not fetched at build time.",
+      "license_urls": [
+        "https://github.com/Niklaus88/Clash-Config/blob/afcae376a52824864970a68c5aa0e24a38444563/LICENSE"
+      ],
+      "license_copies": [
+        {
+          "path": "licenses/Niklaus88-Clash-Config-LICENSE.txt",
+          "sha256": "34da761f0f669f9001cc41a2a30b499843e69f6d699fc7a98db9ee942758e40a",
+          "source": "https://github.com/Niklaus88/Clash-Config/blob/afcae376a52824864970a68c5aa0e24a38444563/LICENSE"
+        }
+      ]
     }
   ],
   "inputs": {

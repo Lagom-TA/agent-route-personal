@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-13T02:48:48.893654+00:00",
+  "generated_at_utc": "2026-11-13T08:19:23.562055+00:00",
   "scope": "domestic_direct_and_adblock",
   "sources": {
     "china_domains": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt",
@@ -48,16 +48,20 @@
     "surge/cn-ip.list": "2455141e8b9ca588712e1cf2ec717c98ecfbe3cdd078a4926296835c7c22b324",
     "mihomo/cn-ip.yaml": "8a0acc418a665b9a04fe9b82912ba16484404555bd114994a3426acbaea748da",
     "sing-box/cn-ip.json": "9c240863bec9317df7e5698cb9a4e872c6d3960218b3bc3919fe427f5b9f3910",
+    "surge/webrtc-guard.list": "3b2069129b19bd09584f0241e9fa9ad1b290ccb2eb3ce19fab26ff0a16f1f648",
+    "mihomo/webrtc-guard.yaml": "34ed50e915b356feb90368b5d5d2df88acda37b53d7ff99a26b68a4e6d3b103f",
+    "sing-box/webrtc-guard.json": "d016b8949a2bfabc60efb40184529f2c84834d8344cab662c1f1e441ada51217",
     "sing-box/non-cn-ip.json": "75730ff23da55d9d95f8f89c6705d9fa4f4c2b984c239015f287ed23576429b7",
-    "index.json": "8c55abeed9b0e062af5a71ec5eb29c8259c3fd9827d0663da000d685765c049f",
+    "index.json": "6e1fe0407324c5e450f2165361bd90e258644b8c7ed98f7f57b82a697dc49bdc",
     "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
-    "sources.json": "be7839bc280d23856e8c583f14df64a9050f5a19bbb2383b834e7900ec880d0f",
-    "NOTICE.md": "72e5fd769e9d61595d4dc3ac5bf1e043d268304a1e457f6ca31ce21afc93b6d6",
+    "sources.json": "831cb649cc3dfcfadb2ff476fec8c8e46977771b1d7f94e2a193f63057b8b206",
+    "NOTICE.md": "913159c13407f455ccc608cf88fcf0e262b3fceb5fe7c6012e10f9052128e97f",
     "licenses/Loyalsoldier-surge-rules-LICENSE.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
     "licenses/Loyalsoldier-v2ray-rules-dat-LICENSE.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
     "licenses/Loyalsoldier-domain-list-custom-LICENSE.txt": "35f18e0331a1ecd1835400c50e3b367c2ce09f6c13d91c4a0f3cb11f71d3bbc3",
     "licenses/Loyalsoldier-geoip-LICENSE.txt": "5e436ff8ffbb77d8607220e9bce20c8915d860010feeb6c1ebef5a85688e9b39",
-    "licenses/Loyalsoldier-geoip-LICENSE-GPL.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    "licenses/Loyalsoldier-geoip-LICENSE-GPL.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "licenses/Niklaus88-Clash-Config-LICENSE.txt": "34da761f0f669f9001cc41a2a30b499843e69f6d699fc7a98db9ee942758e40a"
   },
   "application_or_country_groups_generated": false,
   "public_formats_version": 1,

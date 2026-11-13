@@ -130,3 +130,14 @@
 - Project: https://someonewhocares.org/hosts/
 - Declared license: Not independently classified; refer to upstream terms
 - Evidence: https://github.com/Loyalsoldier/v2ray-rules-dat/blob/master/.github/workflows/run.yml
+
+## Niklaus88/Clash-Config
+
+- Author: Niklaus88
+- Role: reference; locally maintained WebRTC common-probe rules
+- Project: https://github.com/Niklaus88/Clash-Config
+- Declared license: MIT
+- Evidence: https://github.com/Niklaus88/Clash-Config/blob/afcae376a52824864970a68c5aa0e24a38444563/clash-script.js#L185
+- Preserved original: [licenses/Niklaus88-Clash-Config-LICENSE.txt](licenses/Niklaus88-Clash-Config-LICENSE.txt)
+
+采用其常见 STUN 端口和域名关键字条件，在本项目中维护并生成三种原生格式。未引入其 DNS、代理组、应用放行例外或可执行覆写脚本；构建时不下载或执行该项目代码。它不是完整 WebRTC 协议识别或任意设备防泄露保证。
