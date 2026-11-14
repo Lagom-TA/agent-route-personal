@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scope": "public_routing_data_only",
-  "generated_at_utc": "2026-11-13T08:19:23.562055+00:00",
+  "generated_at_utc": "2026-11-14T02:37:12.510105+00:00",
   "base_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/",
   "manifest_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json",
   "agent_guide_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/AGENTS.md",
@@ -54,20 +54,20 @@
         "surge": {
           "path": "surge/reject.list",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/reject.list",
-          "sha256": "0c49bba065fa662cc6f85688b068f8aca0ca23a61e2d18c0c74ed2e6a506e432",
-          "entries": 199928
+          "sha256": "e26345dba87adaf13fb57f4f33fe7c780e1e46b9c18d2e58451f06bbfd66adb7",
+          "entries": 200344
         },
         "mihomo": {
           "path": "mihomo/reject.yaml",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml",
-          "sha256": "0d6890fb737f3ecd78e1a946fb1e8ec8ef1125a1a2051bd4b991a72abf275ea7",
-          "entries": 199928
+          "sha256": "e36cab698736e6676bac0432b81b1b1816191d1b5c9483a4751af1e575666a71",
+          "entries": 200344
         },
         "sing-box": {
           "path": "sing-box/reject.json",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.json",
-          "sha256": "ff1bd3cd1d6a517f0e0af4c1eb85b9ce9633df0868e12a1663788a6ec14183c9",
-          "entries": 199928
+          "sha256": "881675184b1d6c89aab842c03636058c21de1468c17a784c9ebc5feede252898",
+          "entries": 200344
         }
       }
     },
@@ -79,20 +79,20 @@
         "surge": {
           "path": "surge/proxy.list",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/proxy.list",
-          "sha256": "25d49c94f736e944efb833f400878b26d51ba84e6a0bfc3a46e263a999480743",
-          "entries": 27351
+          "sha256": "040015209a9531a6ac68c3d794bec47c926a110ae30de5c5f87588724533c70b",
+          "entries": 27352
         },
         "mihomo": {
           "path": "mihomo/proxy.yaml",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml",
-          "sha256": "1a5f7d1cd6a420f5c69c37ec67dc7c01256ccecdaeb9cb772858908a51874162",
-          "entries": 27351
+          "sha256": "12b72a58c5d7b899ed6b83bb0acef79e6c62ebb90469d0909b23ce33d57e994c",
+          "entries": 27352
         },
         "sing-box": {
           "path": "sing-box/proxy.json",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.json",
-          "sha256": "3f90d48fc0a1227bd9a0771266e48b0ff01dc9255377b19f78dded95ff20f23c",
-          "entries": 27351
+          "sha256": "09da6a56791482053967dcac6cca334439b68f62269f6ba79bafa2deb29b07ad",
+          "entries": 27352
         }
       }
     },
@@ -104,20 +104,20 @@
         "surge": {
           "path": "surge/direct.list",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/direct.list",
-          "sha256": "eac1a4de7c148c8f844b64cd52d24dd219478dac4b69ace9fa3306210db8dbd3",
-          "entries": 109588
+          "sha256": "024fd07228841ca87fbb7fc59946d0c47d0611d424087a6fd0730a8917567a4a",
+          "entries": 109687
         },
         "mihomo": {
           "path": "mihomo/direct.yaml",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/direct.yaml",
-          "sha256": "a8ed6b4c8b41442bd9444d33778347c88de3645eb0b7c7d7265a7cb525803795",
-          "entries": 109588
+          "sha256": "b4723b186889bae49c7d5b4773d28d3a85945874c34fbb6645396bc210da1578",
+          "entries": 109687
         },
         "sing-box": {
           "path": "sing-box/direct.json",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/direct.json",
-          "sha256": "c8b26bb1f40e7fbe6384149bdb291f2816b93ad3d0feae35644c3504eef51a5d",
-          "entries": 109588
+          "sha256": "5369cf0ea1b3c0a1f82e9ba59ba2f23185f766882f7540e2843c6d0c09a9ff34",
+          "entries": 109687
         }
       }
     },
