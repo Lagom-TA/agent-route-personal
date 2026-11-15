@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "upstream_master": "08f0258ecb2035ca7e11170d1845611071b84a27",
+  "upstream_master": "c251b8ed7401e9df18b174d0442c3445798b7afe",
   "files": {
     "AGENTS.md": "74f2b4fcc9690dd01c34f04736b833414593729a39f654919d34c113d71b31f9",
     "docs/CLIENTS.md": "d99a1baa55ee53d17b3f377c88fde7988b76a97fe80ce5ee5567f34830482a7d",
-    "docs/DNS-WEBRTC.md": "4bd5d89336c028b951710ea6e135e06af7b9744bf109bd31f68382b8b8955231",
+    "docs/DNS-WEBRTC.md": "dda019031f8e2cbecab55d320ec3b7dedbb4f3c93db1be0e7575428164dc58b2",
     "docs/SYNC.md": "38618961a302b1a96aa90a371d57dfcfa528d30e876ce3586db2f1537ef9e4ed",
     "scripts/sync_rules.py": "78e8542f1affeff07b378112ee646f5b5e53f9b467d3e255b8f894cde4a10deb",
     "examples/full/mihomo.yaml": "6fa95c3fe19ab2259e73bc85af1c2b83187c3b0b06077c7ccec6a306ef0003d2",
