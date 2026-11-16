@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "upstream_master": "c251b8ed7401e9df18b174d0442c3445798b7afe",
+  "upstream_master": "8ec9a67b1aaae71b9bef5c06a87696470515ec31",
   "files": {
     "AGENTS.md": "74f2b4fcc9690dd01c34f04736b833414593729a39f654919d34c113d71b31f9",
     "docs/CLIENTS.md": "d99a1baa55ee53d17b3f377c88fde7988b76a97fe80ce5ee5567f34830482a7d",
