@@ -4,6 +4,8 @@
 
 [AGENTS](../AGENTS.md) 提供规则入口和操作边界。具体接法由使用者的 Agent 根据现有配置和实际客户端版本决定。
 
+Mihomo、sing-box 和 Surge 可以按当版索引选择同一规则的其他文件格式。小火箭使用已有 LIST 入口。[可选格式与使用方法](FORMATS.md)
+
 <a id="scope"></a>
 
 ## 接入范围
@@ -76,7 +78,7 @@ TUN 和系统代理可以同时开。这时网页可能走系统代理、WebRTC 
 
 接入时保留节点连接、引导解析、LAN、DNS 和核心自有地址所需的技术路径。核对真实 FakeIP 池与 TUN 前缀，避免当作真实 LAN 或中国 IP 匹配。
 
-`private` 为通用内网域名，`direct` 只含域名，`cn-ip` 只含公网中国 IPv4 / IPv6。保留精确域名和后缀的区别。域名进入中国 IP 兜底时须核对整组真实地址，混合国内外答案走代理兜底。Mihomo 的 `no-resolve` 跳过本条触发的解析，前序规则已经解析的地址仍可能命中。无法保证的域名使用代理兜底，按[受限接入](#limited-integration)说明适用范围。sing-box 的 non-cn-ip 辅助集用于 DNS 判断，具体实现按版本确认。[Mihomo 匹配说明](https://wiki.metacubex.one/en/config/rules/#no-resolve)
+`private` 为通用内网域名，`direct` 只含域名，`cn-ip` 只含公网中国 IPv4 / IPv6。保留精确域名和后缀的区别。域名进入中国 IP 兜底时须核对整组真实地址，混合国内外答案走代理兜底。Mihomo 的 `no-resolve` 跳过本条触发的解析，前序规则已经解析的地址仍可能命中。无法保证的域名使用代理兜底，按[受限接入](#limited-integration)说明适用范围。sing-box 1.14.4 示例中的 non-cn-ip 按每次 DNS 答复判断，同一域名的 IPv4 与 IPv6 可能选中不同出口。[Mihomo 匹配说明](https://wiki.metacubex.one/en/config/rules/#no-resolve) · [sing-box 示例验证](../examples/README.md)
 
 <a id="订阅适配"></a>
 
@@ -94,7 +96,7 @@ TUN 和系统代理可以同时开。这时网页可能走系统代理、WebRTC 
 
 ### Shadowrocket
 
-小火箭（Shadowrocket）入口指向同一组 `surge` 格式文件。引用和刷新能力以实际 App 版本为准。
+小火箭（Shadowrocket）与 Surge 共用 `surge/webrtc-guard.list` 及五类业务文件。防护文件用 `DEST-PORT` 匹配目标端口。请按实际 App 版本分别确认远程文件已加载、端口样本命中并被拒绝，再记录刷新结果。项目目前只有小火箭的文本检查和公开版本资料。[客户端证据](CLIENT-EVIDENCE.md#客户端案例)
 
 ### sing-box
 
@@ -148,7 +150,7 @@ TUN 和系统代理可以同时开。这时网页可能走系统代理、WebRTC 
 
 托管配置或模块可能限制可用策略和排序。先按官方资料与现场检查确认限制；若无法保持规则语义，说明缺失能力和替代方案，取得用户选择。没有可靠方案或用户未接受限制时停止相关修改。
 
-只支持追加规则，或发现旧业务规则、旧规则集或旧兜底仍生效时，标明覆盖未完成。用户接受受限接入时，说明实际接入的资源、主配置承接的行为和缺失项。完整设备接入还需验证适用的 TUN、DNS 和 WebRTC 目标。[Surge 模块手册](https://manual.nssurge.com/profile/module.html)提供了策略和排序受限的一个例子。
+只支持追加规则，或发现旧业务规则、旧规则集或旧兜底仍生效时，标明覆盖未完成。例如，Surge 模块可以引用主配置已有的代理组，但其规则插入原规则顶部。要确认替换完成，仍须回读合并后的业务规则和最终兜底。用户接受受限接入时，说明实际接入的资源、主配置承接的行为和缺失项。完整设备接入还需验证适用的 TUN、DNS 和 WebRTC 目标。[Surge 模块手册](https://manual.nssurge.com/profile/module.html)
 
 ## 更新与验证责任
 

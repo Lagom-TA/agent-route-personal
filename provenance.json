@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "upstream_master": "a49eb64f12bca16ac1dfc97969c9ed0cd20a2a39",
+  "upstream_master": "eba7782b8f862a5e1372a644e07ac35810afcc63",
   "files": {
     "AGENTS.md": "d6d450d48c0e55b9b914e39088971ebfcf7a5f774d7dc7f889c657e27930d1d6",
-    "docs/CLIENTS.md": "f59024a2a686159849ef0a584bcbb66403e5c6c456bdd1a1fde489e2fd49ab44",
-    "docs/DNS-WEBRTC.md": "4e15b50af2a477295506cd5525aa05785b8c282f4475ab6cae35000131496e76",
-    "docs/SYNC.md": "38618961a302b1a96aa90a371d57dfcfa528d30e876ce3586db2f1537ef9e4ed",
-    "scripts/sync_rules.py": "78e8542f1affeff07b378112ee646f5b5e53f9b467d3e255b8f894cde4a10deb",
-    "examples/full/mihomo.yaml": "6fa95c3fe19ab2259e73bc85af1c2b83187c3b0b06077c7ccec6a306ef0003d2",
-    ".github/workflows/run.yml": "200bac697f9845d0c6b6ff37f2daef559d6c4a554407c1fd21580f62e17d9d86"
+    "docs/CLIENTS.md": "1c20a7fda64725ac7a57ae65777af40f78e94254c18853339c91b14625b43f01",
+    "docs/DNS-WEBRTC.md": "e5bb462f99ec848609afd895a15cffe858e41fcd95bf2fe289f5d2dd6148baf0",
+    "docs/SYNC.md": "f537787f7996e65c2dcaf2662878afe2d556d56f40435ab29324d5a8bf712417",
+    "scripts/sync_rules.py": "d282a4fb15bf3a5bdeb1ce853ec3ea5f985bbac62fcf014198e5896e2a3a5a06",
+    "examples/full/mihomo.yaml": "8abe8c7cf716c01412ed9e28616201972305b765eaade9b1d95d673c43ce0a17",
+    ".github/workflows/run.yml": "213261336133316168fafcbf32605a8c0b009a83a998fc68d6e23edb6d23acfe"
   },
   "storage": {
     "AGENTS.md": "snapshots/source-AGENTS.md.txt",

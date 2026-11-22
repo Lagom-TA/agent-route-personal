@@ -39,13 +39,15 @@ jobs:
       - run: python -B -m unittest discover -s scripts -p "test_*.py"
       - run: python -O -B -m unittest discover -s scripts -p "test_*.py"
       - run: python -B scripts/check_contracts.py
-  # Standard library only, so nothing installed for validation can touch these bytes.
+  # Generate the text once, then compile optional representations from that snapshot.
   build:
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
-      manifest_sha256: ${{ steps.dataset.outputs.manifest_sha256 }}
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      manifest_sha256: ${{ steps.candidate.outputs.manifest_sha256 }}
+      release_baseline: ${{ steps.dataset.outputs.release_baseline }}
       stale_upstreams: ${{ steps.dataset.outputs.stale_upstreams }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -55,14 +57,22 @@ jobs:
         id: dataset
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          AGENTROUTE_RELEASE_REPOSITORY: ${{ github.repository }}
           AGENTROUTE_ALLOW_SHRINK: ${{ inputs.allow_shrink }}
+        run: python3 -B scripts/build_rules.py
+      - name: Get pinned native compilers
+        run: bash scripts/ci_rule_tools.sh
+      - name: Compile optional formats from the same text generation
+        id: candidate
         run: |
-          python3 -B scripts/build_rules.py
-          echo "manifest_sha256=$(sha256sum generated/manifest.json | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+          python3 -B scripts/build_variants.py --source generated --output candidate \
+            --mihomo "$RUNNER_TEMP/rule-tools/mihomo" --sing-box "$RUNNER_TEMP/rule-tools/sing-box"
+          echo "manifest_sha256=$(sha256sum candidate/manifest.json | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: routing-data
-          path: generated
+          name: routing-data-${{ github.run_attempt }}
+          path: candidate
           if-no-files-found: error
           retention-days: 7
   validate:
@@ -75,25 +85,29 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: routing-data
+          artifact-ids: ${{ needs.build.outputs.artifact_id || 'missing-artifact-id' }}
           path: generated
+      - name: Validate the generated release contracts
+        env:
+          MANIFEST_SHA256: ${{ needs.build.outputs.manifest_sha256 }}
+        run: |
+          echo "$MANIFEST_SHA256  generated/manifest.json" | sha256sum --check --strict
+          python3 -m pip install --disable-pip-version-check -r requirements-dev.txt
+          python3 -B scripts/check_contracts.py --generated generated --require-variants
+          python3 -B scripts/check_public_suffixes.py --generated generated
       - name: Verify with pinned official native clients
         run: |
-          set -euo pipefail
-          python3 -m pip install --disable-pip-version-check -r requirements-dev.txt
-          mkdir -p "$RUNNER_TEMP/rule-tools"
-          cd "$RUNNER_TEMP/rule-tools"
-          curl --fail --location --max-time 120 --output mihomo.gz https://github.com/MetaCubeX/mihomo/releases/download/v1.19.32/mihomo-linux-amd64-v1-v1.19.32.gz
-          echo '306f81e723e60ce6b828899a6fe83e1d00e9ecefb2dc8d4d849312a5bc00efdc  mihomo.gz' | sha256sum --check --strict
-          gzip -d mihomo.gz
-          chmod +x mihomo
-          curl --fail --location --max-time 120 --output sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/download/v1.14.4/sing-box-1.14.4-linux-amd64.tar.gz
-          echo '699a1b510aa4396b2176d32d1181920399ebf1e267835da6f3b598d0f7c24968  sing-box.tar.gz' | sha256sum --check --strict
-          tar -xzf sing-box.tar.gz
-          cd "$GITHUB_WORKSPACE"
-          python3 -B scripts/validate_native.py --mihomo "$RUNNER_TEMP/rule-tools/mihomo" --sing-box "$RUNNER_TEMP/rule-tools/sing-box-1.14.4-linux-amd64/sing-box"
+          bash scripts/ci_rule_tools.sh
+          python3 -B scripts/validate_native.py --mihomo "$RUNNER_TEMP/rule-tools/mihomo" --sing-box "$RUNNER_TEMP/rule-tools/sing-box"
+      - name: Check sing-box DNS answers and selected outbounds on loopback
+        run: |
+          if ! command -v dig >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends bind9-dnsutils
+          fi
+          python3 -B scripts/check_sing_box_dns.py --sing-box "$RUNNER_TEMP/rule-tools/sing-box"
   # The only job with write access. It checks out no code and installs nothing:
-  # it moves the validated bytes, and only its last step ever sees the token.
+  # it moves the validated bytes, and only the push step receives an explicit token.
   publish:
     needs: [build, validate]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
@@ -104,30 +118,66 @@ jobs:
     steps:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: routing-data
+          artifact-ids: ${{ needs.build.outputs.artifact_id || 'missing-artifact-id' }}
           path: publish
-      - name: Confirm these are the bytes that were built
+      - name: Prepare and verify the exact Git tree to publish
+        id: prepare
         working-directory: publish
         shell: bash
         env:
           MANIFEST_SHA256: ${{ needs.build.outputs.manifest_sha256 }}
         run: |
-          echo "$MANIFEST_SHA256  manifest.json" | sha256sum --check --strict
-          jq -r '.files | to_entries[] | "\(.value)  \(.key)"' manifest.json | sha256sum --check --strict --quiet
-          diff <(find . -type f | sed 's|^\./||' | LC_ALL=C sort) <( (jq -r '.files | keys[]' manifest.json; echo manifest.json) | LC_ALL=C sort)
+          set -euo pipefail
+          if [[ -n "$(find . ! -type f ! -type d -print)" ]]; then
+            echo "::error::Release artifacts must contain only regular files and directories"
+            exit 1
+          fi
+          if [[ "$(sha256sum manifest.json | cut -d' ' -f1)" != "$MANIFEST_SHA256" ]]; then
+            echo "::error::Manifest differs from the build output"
+            exit 1
+          fi
+          git init --quiet --initial-branch=direct-rules-release
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -c core.autocrlf=false add --force --all
+          git commit --quiet -m 'Publish one validated routing-data generation'
+          git ls-tree -r --format='%(objectmode) %(path)' HEAD | LC_ALL=C sort > "$RUNNER_TEMP/release-tree"
+          jq -r '((.files | keys[]), "manifest.json") | "100644 \(.)"' manifest.json | LC_ALL=C sort | diff "$RUNNER_TEMP/release-tree" -
+          jq -r --arg manifest "$MANIFEST_SHA256" '.files + {"manifest.json": $manifest} | to_entries[] | [.key, .value] | @tsv' manifest.json |
+            while IFS=$'\t' read -r path expected; do
+              actual=$(git cat-file blob "HEAD:$path" | sha256sum | cut -d' ' -f1)
+              if [[ "$actual" != "$expected" ]]; then
+                echo "::error::Git blob differs from the build output: $path"
+                exit 1
+              fi
+            done
       - name: Publish only the validated dataset
+        id: push
         working-directory: publish
         shell: bash
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_BASELINE: ${{ needs.build.outputs.release_baseline }}
         run: |
+          set -euo pipefail
           remote="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          expected=$(git ls-remote "$remote" refs/heads/release | cut -f1)
-          git init --quiet --initial-branch=direct-rules-release
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add --all
-          git commit --quiet -m 'Publish one validated routing-data generation'
+          if [[ "$RELEASE_BASELINE" == absent ]]; then
+            expected=''
+          elif [[ "$RELEASE_BASELINE" =~ ^[0-9a-f]{40}$ && ! "$RELEASE_BASELINE" =~ ^0{40}$ ]]; then
+            expected="$RELEASE_BASELINE"
+          else
+            echo "::error::Missing or invalid release baseline from build"
+            exit 1
+          fi
+          # Re-runs keep the original GITHUB_SHA. Only release is written by the push.
+          if ! master_ref=$(git ls-remote --exit-code --refs "$remote" refs/heads/master); then
+            echo "::error::Could not read the current master tip"
+            exit 1
+          fi
+          if [[ "$master_ref" != "$GITHUB_SHA"$'\trefs/heads/master' ]]; then
+            echo "::error::Original workflow source is no longer the master tip"
+            exit 1
+          fi
           git push "$remote" HEAD:refs/heads/release --force-with-lease="refs/heads/release:$expected"
   # The rules are already published. Failing here is the one signal that reaches the
   # maintainer: GitHub emails about failed runs and the build badge turns red.
