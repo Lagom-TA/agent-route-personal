@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "upstream_master": "eba7782b8f862a5e1372a644e07ac35810afcc63",
+  "upstream_master": "f6f4546d540f3d0928ab740d4bb867579a27949b",
   "files": {
     "AGENTS.md": "d6d450d48c0e55b9b914e39088971ebfcf7a5f774d7dc7f889c657e27930d1d6",
-    "docs/CLIENTS.md": "1c20a7fda64725ac7a57ae65777af40f78e94254c18853339c91b14625b43f01",
+    "docs/CLIENTS.md": "4817abb25ba1f44dfd92eda9d67cdf6cb69b523b29fd9c452670d245cf81cb75",
     "docs/DNS-WEBRTC.md": "e5bb462f99ec848609afd895a15cffe858e41fcd95bf2fe289f5d2dd6148baf0",
     "docs/SYNC.md": "f537787f7996e65c2dcaf2662878afe2d556d56f40435ab29324d5a8bf712417",
     "scripts/sync_rules.py": "d282a4fb15bf3a5bdeb1ce853ec3ea5f985bbac62fcf014198e5896e2a3a5a06",
