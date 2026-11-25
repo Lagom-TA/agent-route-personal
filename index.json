@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scope": "public_routing_data_only",
-  "generated_at_utc": "2026-11-24T06:17:15.761201+00:00",
+  "generated_at_utc": "2026-11-25T05:00:11.305228+00:00",
   "base_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/",
   "manifest_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/manifest.json",
   "agent_guide_url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/master/AGENTS.md",
@@ -54,20 +54,20 @@
         "surge": {
           "path": "surge/reject.list",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/reject.list",
-          "sha256": "1db6033be505034c3bf2acadfc3f28d7a853c09ec3c532f7450c213afcaad7d2",
-          "entries": 203233
+          "sha256": "6b2f0aea44d6083ca9cf9ff424ae8573b02aad4dd5a0ce3b01c87b1cbe7bb8f0",
+          "entries": 203624
         },
         "mihomo": {
           "path": "mihomo/reject.yaml",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.yaml",
-          "sha256": "35d3a56a290e32de79dcd31b70774a01b8e39d958f6b672c1c03ba67938a926a",
-          "entries": 203233
+          "sha256": "c6c05a649eb8335c2d4220b971adfeb53b866e84d7a8d26ec4aee7483fda8d27",
+          "entries": 203624
         },
         "sing-box": {
           "path": "sing-box/reject.json",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.json",
-          "sha256": "2e2ed18bb8133fc9a731a568ed19b10032e982c6eba2908fd8729d1b22fd0576",
-          "entries": 203233
+          "sha256": "77e4be7c347d346eea21545cc5b70fa1787e96331cfb9506dfcf4bf4f24ceeb5",
+          "entries": 203624
         }
       }
     },
@@ -79,20 +79,20 @@
         "surge": {
           "path": "surge/proxy.list",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/surge/proxy.list",
-          "sha256": "2a1fa61666a8f86aede811960ec47a13b638ed1a39ed49fd203ef69475275fcc",
-          "entries": 27272
+          "sha256": "9a91d79a0d5bdf2741896f848008395f98b02eba78a391059b5b4d7ad5e173d8",
+          "entries": 27277
         },
         "mihomo": {
           "path": "mihomo/proxy.yaml",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.yaml",
-          "sha256": "a6f42195e0d8f5c29b5102bd48993cc34a816a18a2cfb1c6fe0bfa939d50d493",
-          "entries": 27272
+          "sha256": "bcad801558e7b8e3797bb72ea3bf021a822780b6f7ef45b35351ec9bf24a72df",
+          "entries": 27277
         },
         "sing-box": {
           "path": "sing-box/proxy.json",
           "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.json",
-          "sha256": "df1b89c4857da1a9ae2c0bd86ce8314991d110569981e0dbdc94b1b378b6a693",
-          "entries": 27272
+          "sha256": "bada3d5702918f69b67be865e9ba567ba74dfccf6ff4ceda7312215f802f5efe",
+          "entries": 27277
         }
       }
     },
@@ -246,16 +246,16 @@
       "format": "mrs",
       "path": "mihomo/reject.mrs",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/reject.mrs",
-      "sha256": "0b95a393328a8c0a448c64e68d22c0c1272463ccf064541bc280409ca861d008",
-      "entries": 203233
+      "sha256": "5e621902cbd26061e7fe09292abb47f55b37b4432760ed179a8bbcaf65a343f6",
+      "entries": 203624
     },
     {
       "id": "proxy",
       "format": "mrs",
       "path": "mihomo/proxy.mrs",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/mihomo/proxy.mrs",
-      "sha256": "60a7ef63fc7e52fcb04cb6c910cbe96150cf26c59c39024498ef20720ca02b54",
-      "entries": 27272
+      "sha256": "a747dc7341952b7f8868b6225daf2d3d51ad816cf1245bd433adb2c97ccd3cd9",
+      "entries": 27277
     },
     {
       "id": "direct",
@@ -286,16 +286,16 @@
       "format": "srs",
       "path": "sing-box/reject.srs",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/reject.srs",
-      "sha256": "55b1495d046a3949bb20d62ad12b088ee39ef25d37d10bfa1b1e9cd1ca619ebc",
-      "entries": 203233
+      "sha256": "a9f75e540355139a9b3aad37744298952e1530b42939935d989d71430f90635a",
+      "entries": 203624
     },
     {
       "id": "proxy",
       "format": "srs",
       "path": "sing-box/proxy.srs",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/sing-box/proxy.srs",
-      "sha256": "0e3543a55777f0970fe17a4e6c9e24001a688359064553a0a62ac73db59e41a9",
-      "entries": 27272
+      "sha256": "d7644199355a72bbfe457f2475088dc6e0c38ad0891ad182782a2e8c9dc0f640",
+      "entries": 27277
     },
     {
       "id": "direct",
@@ -342,16 +342,16 @@
       "format": "domain-set",
       "path": "reject.domains",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/reject.domains",
-      "sha256": "e7b3efee80f7599169997e3502896cdeeee9172678307953b06fa9b2421f2437",
-      "entries": 203233
+      "sha256": "97ece53fc9082f50357a6d776abd9d3a84d6325657a9fef13d40ff50fd650702",
+      "entries": 203624
     },
     {
       "id": "proxy",
       "format": "domain-set",
       "path": "proxy.domains",
       "url": "https://raw.githubusercontent.com/ryuu-restart/agent-route/release/proxy.domains",
-      "sha256": "39cb4d26b1ec0d83d25dfb2d445caee4c0aa4b9689eaffab3498f81bd74b6d66",
-      "entries": 27272
+      "sha256": "122829b77505aa274095765a61712e31f2f26e44a7e24bd27496741386a6def4",
+      "entries": 27277
     },
     {
       "id": "direct",
