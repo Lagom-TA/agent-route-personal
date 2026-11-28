@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-27T04:26:31.296742+00:00",
+  "generated_at_utc": "2026-11-28T04:06:46.923501+00:00",
   "scope": "domestic_direct_and_adblock",
   "sources": {
     "china_domains": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/release/direct-list.txt",
@@ -10,8 +10,8 @@
   },
   "source_sha256": {
     "china_domains": "6f0a812e5b6a240bc4555d4989ca227ade3eb2151a55b85d25aa9d4d711975cb",
-    "foreign_domains": "03cfc8b12bc774795254ff96b6cbe6e049fde94d0cda9b35ff9bd8259539b324",
-    "advertising_domains": "68dd87abf810f21168b2289ee6d7e95debbd3488ef010c61c2e563f73daabc57",
+    "foreign_domains": "3065a7feb146c15ef379d18c8bc8d981e9c78051fea9f2d465dd2f8162ed6793",
+    "advertising_domains": "5740d4791bc9401165cb414bd841c71d3e8280cc25825d3bf959e0c25d1b7fd9",
     "private_domains": "e47e0f71fb6bc46d40a4178ee356c9d615512ccef25ba00838ca0e66e332ab34",
     "china_ip": "e42bea67f52869dc3d5331b4f46b67438f3d8a6041cd080a2c31c2bc9c05bf0f"
   },
@@ -19,7 +19,7 @@
     "exact_domains": 61,
     "suffix_domains": 109584,
     "ip_prefixes": 9748,
-    "adblock_domains": 204388,
+    "adblock_domains": 204783,
     "private_domains": 132
   },
   "excluded_overseas_domain_entries": 734,
@@ -28,20 +28,20 @@
     "direct.json": "94072410ac13232279c06dfe4b7228e076da801c5b7f897f636a7af31dfcbab2",
     "direct.domains": "ee16597001c93f955d7bc38523724af582233e82ffc1437af2bf128e3b6a1f77",
     "direct.ipcidr": "c22eb5d1e14eb3cb781b6c5bdd83d54f8835a212b905a00988ad5f8909dc7f98",
-    "reject.domains": "905da18e52a9587eec0fcf36568b3b309844fa33a1e18a9d08e6541001e9c308",
-    "reject.list": "cbb0dddbbd257d91516918c4a99f9cfcc075efd20736e2d95c29d72d227a6ac4",
-    "reject.json": "8ab1d750266bd8e2a09068c52f5b898b61cd59f1468d2048ca36aa1fcf3fa6f9",
+    "reject.domains": "0347a79aa59ae414f39f40106197896f52c28703102e869c5e8f4e95b25432e2",
+    "reject.list": "ffd4be00908f667ff19d9c557850c96a7f7dc221c1b5c1120383d1e1aef0b1ca",
+    "reject.json": "40441efc19d7c21a62514973cee09203b2107cb9cb335ff96de41e2cc4252e13",
     "private.domains": "d2028cded1294f9851d04263e111df9e94c4b2d262d855e778a8cf77f552392c",
-    "proxy-source.txt": "03cfc8b12bc774795254ff96b6cbe6e049fde94d0cda9b35ff9bd8259539b324",
+    "proxy-source.txt": "3065a7feb146c15ef379d18c8bc8d981e9c78051fea9f2d465dd2f8162ed6793",
     "surge/private.list": "0a12195dca956080fae8d577186a5760887fda60fdc3f6a08238cd68a32c8045",
     "mihomo/private.yaml": "cf90beec68da49318d2c94b5ccf1cc68b12dad979cc0bbec3ba5afb0b16ebd3a",
     "sing-box/private.json": "8f859e68be575c23468a848b73ef0651505c80dcdf2180e1f2794e638ae637bb",
-    "surge/reject.list": "cbb0dddbbd257d91516918c4a99f9cfcc075efd20736e2d95c29d72d227a6ac4",
-    "mihomo/reject.yaml": "41dc964677e5eed46ae68facd458a3532cf4ed84151b3bb3b2bc709b8886c17b",
-    "sing-box/reject.json": "8ab1d750266bd8e2a09068c52f5b898b61cd59f1468d2048ca36aa1fcf3fa6f9",
-    "surge/proxy.list": "6f87f70eb74e2fed7148cf6be5ba8fa6228a87d937572ec8cab4bb3384221fa8",
-    "mihomo/proxy.yaml": "03cc9c31de430a44eb7c10c643ab83756031614be2ee73caa2ccc3e0749f9ddf",
-    "sing-box/proxy.json": "be2dfa424a55539fb463f0a497609a70658448dc4527823b182730deaa3a4c3c",
+    "surge/reject.list": "ffd4be00908f667ff19d9c557850c96a7f7dc221c1b5c1120383d1e1aef0b1ca",
+    "mihomo/reject.yaml": "e125df38e17f95e3d4d95182a26e8bc15e37684bc42161ca16ae65f442f16fa0",
+    "sing-box/reject.json": "40441efc19d7c21a62514973cee09203b2107cb9cb335ff96de41e2cc4252e13",
+    "surge/proxy.list": "b1bdcd821f0f2030d31855cf05427605bab2ae51d0c6dd6a5b609690cd22fe03",
+    "mihomo/proxy.yaml": "89b6b24c0fe2dab824fd530433572490b39846364116456f73c7b44a624f899c",
+    "sing-box/proxy.json": "5febb0225b3135d9735ad99444da6ae16a9ee758e7b0d68813c763f4e578cee2",
     "surge/direct.list": "c89b74582e632098ffc3145d43d1d6e8720ee9e98af5d7e4ea4d23c0ef53f32c",
     "mihomo/direct.yaml": "c11c05aa78b0c67391d3db2f4621022110ba94123d422a725b89eaf22e215e89",
     "sing-box/direct.json": "da9e363f6d28c32b8f567da34e0f75393d2bbb71b02d40b41c819eb61d2c6a70",
@@ -52,7 +52,7 @@
     "mihomo/webrtc-guard.yaml": "34ed50e915b356feb90368b5d5d2df88acda37b53d7ff99a26b68a4e6d3b103f",
     "sing-box/webrtc-guard.json": "d016b8949a2bfabc60efb40184529f2c84834d8344cab662c1f1e441ada51217",
     "sing-box/non-cn-ip.json": "2692d6564819980a6c5388305b0a45614d7ead35a48cd1c41b07fcb83a27ec47",
-    "index.json": "e15e0b59fbf1d0c93764bce67595eda9122693f40d4c6ca739314d0f2b6b8e30",
+    "index.json": "09c54d6bde814112bf93c5030ed21364908b8b2fe1eee0161c7c6bb601cb0200",
     "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
     "sources.json": "831cb649cc3dfcfadb2ff476fec8c8e46977771b1d7f94e2a193f63057b8b206",
     "NOTICE.md": "913159c13407f455ccc608cf88fcf0e262b3fceb5fe7c6012e10f9052128e97f",
@@ -63,18 +63,18 @@
     "licenses/Loyalsoldier-geoip-LICENSE-GPL.txt": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
     "licenses/Niklaus88-Clash-Config-LICENSE.txt": "34da761f0f669f9001cc41a2a30b499843e69f6d699fc7a98db9ee942758e40a",
     "mihomo/private.mrs": "df452ab1bfb572f366f00001fa4525f16f137dc670aed2c60af0100dc397d3ec",
-    "mihomo/reject.mrs": "eb8906d81730487004935ed9d1388432a89a5a3d229aa57545f40711db132735",
-    "mihomo/proxy.mrs": "435965e87b5d26def0a87dd7cfffe6670d754ff12ddb0d39e2e579caa151454f",
+    "mihomo/reject.mrs": "ba1fef242562a55b90cbc8ddef451b13685dbf5338950e09934f66acdf6f7945",
+    "mihomo/proxy.mrs": "c5829cdd584a23c0d6b2a401ee70215138ef435af6b72bba4863cd20be6d3604",
     "mihomo/direct.mrs": "d186625c1fa649e6a3abf0507d5bc0b87dd64de1cd87473ebb38c56c910c4c5c",
     "mihomo/cn-ip.mrs": "16c329b9450dad35130b153aa126bcedd2359abd2f686454f4e154cf61a61778",
     "sing-box/private.srs": "23951153c8d241d6636b192e835f6c2c01d9cddcfd12448134a52df82a60607b",
-    "sing-box/reject.srs": "cbc069e2f2ee158ed1b0f8f4b8df92c1113cf5e3e1f6bd7805d4b7ef6f0a95bc",
-    "sing-box/proxy.srs": "8a82aadb4049f39cfb7aff856fb57ea5cc498164b14d68b38c6636d235906a6d",
+    "sing-box/reject.srs": "1c4027499c37d76c9cf739b032885b9f27796ccffd288c8834f1cfaf803ccd09",
+    "sing-box/proxy.srs": "0701538ab64f6f79123515c7f6d3b068766bd7ea1e064817550da1d4e844f766",
     "sing-box/direct.srs": "c584c8b3dd96e24993fad884789d507062fa592c5a197c804a45f6e39d34d822",
     "sing-box/cn-ip.srs": "1e376a84f9c85f8900838aa408d954009d21fd4822a0a43900931b79a0261be1",
     "sing-box/webrtc-guard.srs": "88beed80cb598de0c3c0602882094d493f4ab9f643fb3fa76995082f6e73e276",
     "sing-box/non-cn-ip.srs": "8aa32947ae728d7ea61fe3fbd131a620de55264584b36603e936e6346371e7d9",
-    "proxy.domains": "49a49cde0b44b1d71926871906f0f50cb8d2c05bdcf7d2adb88d639861322867"
+    "proxy.domains": "6a999dedc29badc280d8e58bb6c8664fc5b8619f80197e9b592cf4872e2c7ae2"
   },
   "application_or_country_groups_generated": false,
   "public_formats_version": 1,
@@ -82,31 +82,31 @@
   "source_versions": {
     "china_domains": {
       "repository": "Loyalsoldier/v2ray-rules-dat",
-      "commit": "6c5992d7c0b128d83ddcad6194905c2c63913868",
-      "committed_at": "2026-11-26T22:05:11Z",
+      "commit": "a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5",
+      "committed_at": "2026-11-27T22:05:07Z",
       "path": "direct-list.txt",
-      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/6c5992d7c0b128d83ddcad6194905c2c63913868/direct-list.txt"
+      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5/direct-list.txt"
     },
     "foreign_domains": {
       "repository": "Loyalsoldier/v2ray-rules-dat",
-      "commit": "6c5992d7c0b128d83ddcad6194905c2c63913868",
-      "committed_at": "2026-11-26T22:05:11Z",
+      "commit": "a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5",
+      "committed_at": "2026-11-27T22:05:07Z",
       "path": "proxy-list.txt",
-      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/6c5992d7c0b128d83ddcad6194905c2c63913868/proxy-list.txt"
+      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5/proxy-list.txt"
     },
     "advertising_domains": {
       "repository": "Loyalsoldier/v2ray-rules-dat",
-      "commit": "6c5992d7c0b128d83ddcad6194905c2c63913868",
-      "committed_at": "2026-11-26T22:05:11Z",
+      "commit": "a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5",
+      "committed_at": "2026-11-27T22:05:07Z",
       "path": "reject-list.txt",
-      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/6c5992d7c0b128d83ddcad6194905c2c63913868/reject-list.txt"
+      "url": "https://raw.githubusercontent.com/Loyalsoldier/v2ray-rules-dat/a7b3aa30aa88aa4c33bead15a1d06343c8fbfba5/reject-list.txt"
     },
     "private_domains": {
       "repository": "Loyalsoldier/domain-list-custom",
-      "commit": "363bfc8111f6139d2d66f981f3269e0a612d83be",
-      "committed_at": "2026-11-25T21:32:16Z",
+      "commit": "8dc2eb2b8536e2f27182731e2549673fa076e276",
+      "committed_at": "2026-11-27T21:32:09Z",
       "path": "private.txt",
-      "url": "https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/363bfc8111f6139d2d66f981f3269e0a612d83be/private.txt"
+      "url": "https://raw.githubusercontent.com/Loyalsoldier/domain-list-custom/8dc2eb2b8536e2f27182731e2549673fa076e276/private.txt"
     },
     "china_ip": {
       "repository": "Loyalsoldier/geoip",
